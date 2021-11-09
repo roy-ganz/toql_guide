@@ -11,3 +11,8 @@ To build the `/src` folder and put the guide into `/docs` run:
 ```bash
 mdbook build
 ```
+
+
+## License
+Toql guide is distributed under the terms of both the MIT license and the
+Apache License (Version 2.0).

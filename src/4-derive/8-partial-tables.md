@@ -17,7 +17,7 @@ struct Question {
 
     text: String,
 
-    #[toql(join(columns(self="id", other="question_id")), partial_table)]
+    #[toql(join(columns(self="id", other="question_id"), partial_table))]
     details: Option<QuestionDetails>
 }
 
