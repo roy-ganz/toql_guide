@@ -13,7 +13,7 @@ skip_mut |No code for insert, delete and update | struct cannot be updated
 predicate |  Define a predicate | `predicate(name="test", sql="MATCH(..name, ..address) AGAINST (?)")` 
 selection |  Define a selection | `selection(name="test", fields="*, address_street")` 
 alias |Ignore calculated alias and use this alias instead| `alias="tb1"` 
-auto_key | Key is generated in database | `auto_key=true` Updates struct keys after inserts.
+auto_key | Key is generated in database | `auto_key` Updates struct keys after inserts.
 roles  |  role restriction for load, update, insert, delete | `roles(update="admin;teacher", insert="admin")`
 
 ## Attributes for fields  

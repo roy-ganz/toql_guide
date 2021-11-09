@@ -27,7 +27,7 @@ Your server needs deserializing either
 
 ```rust
     #[derive(Toql)]
-    #[toql(auto_key = true)]
+    #[toql(auto_key)]
     struct User {
     
         // 'default' allows missing field 'id' in Json

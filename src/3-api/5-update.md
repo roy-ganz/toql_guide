@@ -69,7 +69,7 @@ it inserts new book (toghether with possible [partial joins](../4-derive/8-parti
     }
 
     #[derive(Debug, PartialEq, Toql)]
-     #[toql(auto_key = true)]
+     #[toql(auto_key)]
     struct User {
         #[toql(key)]
         id: u64,

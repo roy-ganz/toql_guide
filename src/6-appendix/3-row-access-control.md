@@ -34,7 +34,7 @@ use toql::prelude::{FieldHandler, DefaultFieldHandler,
 	SqlExpr, ParameterMap, SqlBuilderError, SqlArg, sql_expr};
 
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct Todo {
 	#[toql(key)]
 	id: u64,

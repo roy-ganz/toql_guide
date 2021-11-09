@@ -10,7 +10,7 @@ Partial tables are supported with joins.
 ```rust
 
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct Question {
     #[toql(key)]
     id: u64

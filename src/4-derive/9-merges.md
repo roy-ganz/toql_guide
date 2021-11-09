@@ -5,7 +5,7 @@ A struct can contain a `Vec` of other structs. Because this can't be loaded dire
 
 ```rust
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct User {
 
 	#[toql(key)]
@@ -47,7 +47,7 @@ Let's go with an example:
 
 ```rust
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct User {
 
 	#[toql(key)]
@@ -118,7 +118,7 @@ But since it's not, we have to mark it with `#[foreign_key]`. This tells to cons
 
 ```rust
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct User {
 	#[toql(key)]
 	id: u64,
@@ -129,7 +129,7 @@ struct User {
 
 
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct Todo {
 	#[toql(key)]
 	id: u64,

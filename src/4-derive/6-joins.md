@@ -64,7 +64,6 @@ struct User {
 }
 
 #[derive(Toql)]
-#[toql(auto_key = false))]
 struct Country {
 
 	#[toql(key)]
@@ -77,7 +76,6 @@ struct Country {
     pub translation: Option<CountryTranslation>
 }
 #[derive(Toql)]
-#[toql(auto_key = false))]
 pub struct CountryTranslation {
 
     #[toql(key)]
@@ -104,8 +102,7 @@ This allows some nifty joining, see here:
 ```rust
 
 #[derive(Toql)]
-#[toql(auto_key = false, 
-		predicate(
+#[toql( predicate(
 			name ="language", 
 			sql="EXISTS(SELECT 1 FROM Country c \
 				JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)", 
