@@ -17,8 +17,16 @@ as compiler errors!
 
 Queries are typesafe, so `query!` takes a type and a query expression. See here (This assumes a Toql derived User struct):
 
-```
-use toql::prelude::query;
+```rust
+use toql::prelude::{query, Toql};
+
+#[derive(Toql)]
+struct User {
+    #[toql(key)]
+    id: u64,
+    name: String
+}
+
 let user_id = 5;
 let q = query!(User, "*, id eq ?",  user_id);
 ```
@@ -33,7 +41,14 @@ However this is not be a problem: Since database columns have a type, the databa
 
 It's also possible to include other queries into a query. Consider this:
 
-```
+```rust
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 use toql::prelude::query;
 let q1 = query!(User, "id eq ?", 5);
 let q = query!(User, "*, {}", q1);
@@ -47,21 +62,35 @@ When entities have composite keys or you want to write generic code it's easier 
 
 With a single key this is possible
 ```rust
-use toql::prelude::query;
+use toql::prelude::{query, Query};
+# use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
 let k = UserKey::from(5); // Easier than UserKey{id:5};
-let q1 = query!(User, "id eq ?", k);
-let q2 = query!(User, "*, {}", Query::from(k));
+let q1 = query!(User, "id eq ?", &k);
+let q2 = query!(User, "*, {}", Query::from(&k));
 let q3 = query!(User, "*, {}", k);
 ```
 
 With multiple keys you can do this:
 ```rust
 use toql::prelude::{query, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
 let ks = vec![UserKey::from(1), UserKey::from(2)];
 
-let q4 = query!(User, "*, id in ?", ks);
+let q4 = query!(User, "*, id in ?", &ks);
 
 let qk = ks.iter().collect::<Query<_>>();
 let q5 = query!(User, "*, {}", qk);
@@ -73,10 +102,16 @@ If you deal with entities you can get their keys from them (notice the `Keyed` t
 
 ```rust
 use toql::prelude::{query, Keyed, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
+let e = User{id:1, name: "User 1".to_string()};
 
-let e = User{id:1};
-
-let q5 =  query!(User, "{}", e.key())
+let q5 =  query!(User, "{}", e.key());
 let q6 =  Query::from(e.key());
 ```
 
@@ -86,8 +121,16 @@ Or with mutiple entities:
 
 ```rust
 use toql::prelude::{query, MapKey, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
-let es = vec![User{id:1}, User{id:2}];
+let es = vec![ User{ id:1, name:"User 1".to_string()}, 
+                User{ id:2, name: "User 2".to_string()}];
 
 let qk = es.iter().map_key().collect::<Query<_>>();
 let q7 = query!(User, "*, {}", qk);
@@ -98,11 +141,22 @@ If you collect keys, they will always be concatenated with *OR*, queries however
 
 Compare `q8` and `q10` here:
 ```rust
-let ks = Vec[UserKey{id:5}, UserKey{id:6}];
-let q8 = ks.iter().collect::<Query<_>>(); // -> query!(User, "(id eq5; id eq 6)")
+use toql::prelude::{query, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
-let q9 = query!(User, "username");
-let q10 = [q9, q8].iter().collect<Query<_>>(); // -> query!(User, "username, (id eq 5; id eq 6)")
+let ks = vec![UserKey{id:5}, UserKey{id:6}];
+let q8 :Query<User> = ks.into_iter().collect(); 
+assert_eq!(q8.to_string(), "(id EQ 5;id EQ 6)");
+
+let q9 = query!(User, "name");
+let q10 :Query<User> = vec![q9, q8].into_iter().collect(); 
+assert_eq!(q10.to_string(), "name,(id EQ 5;id EQ 6)");
 
 ```
 
@@ -114,15 +168,22 @@ You can also implement this trait for you own types. Let's assume a book categor
 
 #### Example 1: Adding an enum filter to the query
 ```rust
-use toql::prelude::Query;
+use toql::prelude::{query, Query, Toql};
+
+#[derive(Toql)]
+struct Book {
+    #[toql(key)]
+    id: u64,
+    category: Option<String>
+}
 
 enum BookCategory {
     Novel,
     Cartoon
 }
-impl Into<Query<Book> for BookCategory {
-    pub fn info(&self) {
-       query!(Book, "category eq ?", 
+impl Into<Query<Book>> for BookCategory {
+    fn into(self) -> Query<Book> {
+       query!(Book, "category EQ ?", 
        match self {
         Novel => "NOVEL",
         Cartoon => "CARTOON"    
@@ -130,27 +191,42 @@ impl Into<Query<Book> for BookCategory {
     }
 }
 
+// Now use it like so
+let q = query!(Book, "*, {}", BookCategory::Novel);
+assert_eq!(q.to_string(), "*,category EQ 'NOVEL'");
 ```
 
-Now use it like this
-```rust
-let q = query!(Book, "*, {}", BookCategory::Novel);
-```
+
 
 #### Example 2: Adding an authorization filter to the query
 
-
 ```rust
-use toql::prelude::{QueryWith, Query, Field}
+use toql::prelude::{QueryWith, Query, Field, QueryFields, Toql};
+   
+#[derive(Toql)]
+struct Book {
+    #[toql(key)]
+    id: u64,
+    category: Option<String>,
+    #[toql(join)]
+    author: Option<User>
+}
+#[derive(Toql)]
+struct User {
+    #[toql(key)]
+    id: u64,
+    name: Option<String>,
+}
+
 struct Auth {
     user_id: u64
 }
 impl Into<Query<Book>> for Auth {
-    pub fn into(self) -> Query<Book> {
+    fn into(self) -> Query<Book> {
 
         // This time with the builder methods for educational reasons
-        // In production do this query!(User, "authorId eq ?", self.user_id)
-        Query::from(Book::fields().author_id().eq(self.user_id))
+        // In production do `query!(User, "author_id eq ?", self.user_id)`
+        Query::from(Book::fields().author().id().eq(self.user_id))
     }
 }
 ```
@@ -158,12 +234,14 @@ impl Into<Query<Book>> for Auth {
 You may want trade typesafety for more flexibility. See the example above again, this time with the `Field` type.
 
 ```rust
-use toql::prelude::{ Query, Field}
+use toql::prelude::{Query, Field};
+
 struct Auth {
     author_id: u64
 }
+
 impl<T> Into<Query<T>> for Auth {
-    pub fn into(&self) -> Query<T>{
+    fn into(self) -> Query<T>{
         Query::from(Field::from("authorId").eq(self.author_id))
     }
 }
@@ -174,8 +252,29 @@ You can use both examples like so
 
 ```rust
 use toql::prelude::query;
-let auth = Auth {author: 5};
+#   use toql::prelude::{Query, Field, Toql};
+#   enum BookCategory {
+#       Novel,
+#       Cartoon
+#   }
+#   #[derive(Toql)]
+#   struct Book {
+#       #[toql(key)]
+#       id: u64,
+#       category: Option<String>
+#   }
+#   struct Auth {
+#       author_id: u64
+#   }
+#   impl<T> Into<Query<T>> for Auth {
+#       fn into(self) -> Query<T>{
+#           Query::from(Field::from("authorId").eq(self.author_id))
+#       }
+#   }
+
+let auth = Auth {author_id: 5};
 let q = query!(Book, "*, {}", auth);
+assert_eq!(q.to_string(), "*,authorId EQ 5");
 ```
 
 
@@ -188,11 +287,13 @@ This is more powerful than `Into<Query>` because you can also access auxiliary p
 Aux params can be used in SQL expressions. See [here](4-derive/2-sql-expressions.md) more information.
 
 ```rust
+use toql::prelude::{QueryWith, Query};
+
 struct Config {
     limit_pages: u64
 }
-impl QueryWith for Config {
-    pub fn with(&self, query: Query<T>) {
+impl<T> QueryWith<T> for Config {
+    fn with(&self, query: Query<T>) -> Query<T> {
         query.aux_param("limit_pages", self.limit_pages)
     }
 }
@@ -201,12 +302,29 @@ impl QueryWith for Config {
 This can now be used like so:
 
 ```rust
-use toql::prelude::query;
+use toql::prelude::{query, SqlArg};
+#   use toql::prelude::{Toql, Query, QueryWith};
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
+#   struct Config {
+#       limit_pages: u64
+#   }
+#   impl<T> QueryWith<T> for Config {
+#       fn with(&self, query: Query<T>) -> Query<T> {
+#           query.aux_param("limit_pages", self.limit_pages)
+#       }
+#   }
+
 let config = Config {limit_pages: 200};
 let k = UserKey::from(5);
-let q = query!(User, "*, {}", k.to_query()).with(config);
+let q = query!(User, "*, {}", k).with(config);
+assert_eq!(q.to_string(), "*,id EQ 5");
+assert_eq!(q.aux_params.get("limit_pages"), Some(&SqlArg::U64(200)));
 ```
-
 
 ### Parsing queries
 Use the query parser to turn a string into a `Query` type. 
@@ -214,11 +332,18 @@ Only syntax errors will returns as errors,
 wrong field names or paths will be rejected later when using the query.
 
 ```rust
-use toql::prelude::Parser;
-
+use toql::prelude::QueryParser;
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 let s = "*, id eq 5";
 
 let q = QueryParser::parse::<User>(s).unwrap();
+assert_eq!(q.to_string(), "*,id EQ 5");
 ```
 
 

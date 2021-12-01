@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Delete - Toql book</title>
+        <title>Delete - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -143,17 +143,35 @@
                         <a class="header" href="#deletes" id="deletes"><h2>Deletes</h2></a>
 <p>There are two delete functions: <code>delete_one</code>, and <code>delete_many</code>.</p>
 <p>Both functions take a predicate and delete all rows that match that predicate.</p>
-<p><code>delete_one</code> takes a key or entity. It will build a filter predicate from that and delete the row that coresponds to the key.</p>
-<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, where as field selects and selections in the query are ignored. See the <a href="5-query-lanuage/1-introduction.html">query language</a> for details.</p>
-<pre><code>use toql::prelude::ToqlApi;
+<p><code>delete_one</code> takes a key. It will build a filter predicate from that and delete the row that coresponds to the key.</p>
+<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the <a href="5-query-lanuage/1-introduction.html">query language</a> for details.</p>
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+use toql::prelude::{ToqlApi, Cache, Toql, query, Keyed};
+use toql::mock_db::MockDb;
 
-toql.delete_one(UserKey::from(5))?;
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+}
 
-let u = User {id: 5};
-toql.delete_one(u).await?;
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-toql.delete_many(query!(User, &quot;id eq 5&quot;)).await?;
-</code></pre>
+toql.delete_one(UserKey::from(5)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;DELETE user FROM User user WHERE user.id = 5&quot;);
+
+let u = User {id: 5, name: &quot;John&quot;.to_string()};
+toql.delete_one(u.key()).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;DELETE user FROM User user WHERE user.id = 5&quot;);
+
+toql.delete_many(query!(User, &quot;id eq 5&quot;)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;DELETE user FROM User user WHERE user.id = 5&quot;);
+# }
+</code></pre></pre>
 <a class="header" href="#cascading" id="cascading"><h3>Cascading</h3></a>
 <p><code>delete</code> does not do any cascading by itself. It just deletes rows from a <em>single</em> table.
 To cascade your deletes you must configure your database relations

@@ -5,6 +5,10 @@ A [Toql query](../5-query-language/1-introduction.md) can select individual fiel
 ### Example:
 
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
   #[derive(Toql)]
  	struct User {
 
@@ -13,12 +17,22 @@ A [Toql query](../5-query-language/1-introduction.md) can select individual fiel
 
 		age: u8,			// Always selected in SQL
 
-		firstname: Option<String>	// Selectable field of non nullable column
-		middlename: Option<Option<String>>// Selectable field of nullable column
+		firstname: Option<String>,	// Selectable field of non nullable column
+		middlename: Option<Option<String>>,// Selectable field of nullable column
 
 		#[toql(preselect)]	
 		lastname: Option<String>	// Always selected in SQL, nullable column
   }
+	let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+  
+	// Load preselected fields
+	let q = query!(User, "id"); 
+	let mut _users = toql.load_many(&q).await.unwrap(); 
+	assert_eq!(toql.take_unsafe_sql(), 
+			"SELECT user.id, user.age, user.lastname FROM User user");
+
+#  }
 ```
 
 You noticed it: Nullable columns that should always be selected must be annotated with `preselect`. 
@@ -32,6 +46,10 @@ Preselected fields on _joined_ structs are selected, if
 
 #### Preselection example 
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
   #[derive(Toql)]
 	struct User {
 
@@ -52,6 +70,19 @@ Preselected fields on _joined_ structs are selected, if
 
 			code: Option<String>
 	}
+	let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+  
+	// Load preselected fields
+	let q = query!(User, "id"); 
+	let mut _users = toql.load_many(&q).await.unwrap(); 
+	assert_eq!(toql.take_unsafe_sql(), 
+			"SELECT user.id, user_nativeLanguage.id \
+			FROM User user \
+			JOIN (Language user_nativeLanguage) \
+			ON (user.native_language_id = user_nativeLanguage.id)");
+
+#  }
 ```
 
 Above `id` in `User` is always selected, because it's _not_ `Option`. 

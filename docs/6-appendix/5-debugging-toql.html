@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Debugging Toql - Toql book</title>
+        <title>Debugging Toql - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -142,12 +142,6 @@
                     <main>
                         <a class="header" href="#debugging-toql" id="debugging-toql"><h1>Debugging Toql</h1></a>
 <p>Toql generates a lot of code. Mostly from the <code>Toql</code> derive, but also from various macros, such as <code>query!</code>.</p>
-<p>Th elibrary does not have any serious software tests and the test matrix is huge. So it may happen</p>
-<ul>
-<li>that you hit a bug.</li>
-<li>the generated code doesn't compile.</li>
-</ul>
-<p>Or you just want to develop a new feature!</p>
 <p>To debug Toql generated code, follow these steps:</p>
 <ol>
 <li>If you have a lot of modules move the affected <code>mod</code> at the end of the mod list. (So generated code will appear in the terminal last).</li>
@@ -160,7 +154,7 @@
 #}</code></pre></pre>
 <ol start="3">
 <li>Copy all the logged code from the derived struct and paste it into the source file.</li>
-<li>Remove the log headers by regex replacing <code>\[2.*</code> with empty string. There should be 9 occurences.</li>
+<li>Remove the log headers by regex replacing <code>\[2.*</code> with an empty string. There should be 13 occurences.</li>
 <li>Copy your derived struct.</li>
 <li>Comment out your derived struct.</li>
 <li>On the copied struct remove all references to Toql.</li>

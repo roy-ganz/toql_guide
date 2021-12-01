@@ -12,57 +12,72 @@ It's possible to write an own field handler. Do it, because
  Let's support a length function `LLE` , so that we can filter on maximum  word length
 
  ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+    use toql::prelude::{ToqlApi, DefaultFieldHandler, FieldHandler, 
+                SqlExpr, SqlBuilderError, FieldFilter, Cache, Toql,
+                ParameterMap, sql_expr, query};
+    use toql::mock_db::MockDb;
 
-use toql::prelude::{BasicFieldFilter, FieldHandler, SqlExpr, SqlBuilderError, FieldFilter};
+    struct LengthFieldHandler{
+        // The default field handler gives us default filters 
+        // such as `EQ`, `NE`, ...
+        default_handler: DefaultFieldHandler, 
+    };
 
- struct LengthFieldHandler{
-     // The default field handler gives us default filters, such as `eq`, `ne`, ...
-	 default_handler: BasicFieldHandler, 
-};
-
-impl FieldHandler for PermissionFieldHandler
-{
-	 fn build_filter(
-        &self,
-        select: SqlExpr,        // Our column or SQL expression
-        filter: &FieldFilter,   // The filter called with this field
-        aux_params: &ParameterMap, // All aux params available
-    ) -> Result<Option<SqlExpr>, SqlBuilderError> {
-        match filter {
-			// Support our custom LL filter that maps to the MySQL FIND_IN_FIELD function
-            FieldFilter::Fn(name, args) => match name.as_str() {
-                "LLE" => {
-                     if args.len() != 1 {
-                        return Err(SqlBuilderError::FilterInvalid( "filter `FN LLE` expects exactly 1 argument".to_string()));
+    impl FieldHandler for LengthFieldHandler
+    {
+        fn build_filter(
+            &self,
+            select: SqlExpr,            // Column or SQL expression
+            filter: &FieldFilter,       // The filter called with this field
+            aux_params: &ParameterMap,  // All aux params available
+        ) -> Result<Option<SqlExpr>, SqlBuilderError> {
+            match filter {
+                // Support our custom LLE filter that maps 
+                // to the MySQL LENGTH function
+                FieldFilter::Fn(name, args) => match name.as_str() {
+                    "LLE" => {
+                        if args.len() != 1 {
+                            return Err(SqlBuilderError::FilterInvalid( 
+                                "filter `FN LLE` expects exactly 1 argument".to_string()));
+                        }
+                        Ok(Some(sql_expr!("LENGTH ({}) <= ?", select, &args[0])))
                     }
-                    Ok(Some(sql_expr!("LENGTH ({}) <= ?", select, args[0])))
-                }
-                name @ _ => Err(SqlBuilderError::FilterInvalid(name.to_string())),
-            },
-            _ => self.default_handler.build_filter(select, filter, aux_params),
+                    name @ _ => Err(SqlBuilderError::FilterInvalid(name.to_string())),
+                },
+                _ => self.default_handler.build_filter(select, filter, aux_params),
+            }
+        }
+
+    }
+
+    // Getter method for mapper
+    pub fn length_field_handler() -> impl FieldHandler {
+        LengthFieldHandler{
+            default_handler: DefaultFieldHandler::new(), 
         }
     }
 
-}
+    #[derive(Toql)]
+    struct User {
+        #[toql(key)]
+        id: u64,
 
-// Getter method for mapper
-pub fn length_field_handler() -> impl FieldHandler {
-    LengthFieldHandler:{
-		 default_handler: BasicFieldHandler::new(), 
-	}
-}
-```
+        #[toql(handler="length_field_handler")]
+        name: Option<String>,
+    }
 
-Now we can map our filter with
+    let cache = Cache::new();
+    let mut toql = MockDb::from(&cache);
 
-```rust
-#[toql(handler="length_field_handler")]
-name: String
-```
-and use it in a query with
-
-```toql
-*, name FN LLE 5
+    let q = query!(User, "name FN LLE 5"); 
+    let mut _users = toql.load_many(&q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            "SELECT user.id, user.name \
+            FROM User user \
+            WHERE LENGTH (user.name) <= 5");
+#   }
 ```
 
 For a bigger example, check out our [permission handler](6-appendix/4-row-access-control.md).
@@ -73,8 +88,10 @@ it mightly come handy to give the field handler some local context.
 
 This can be achieved with local aux_params:
 
-```rust
-    #[toql(sql="", field_handler="smart_name_handler", aux_param(name="strategy", value="quick"))]
+```rust, ignore
+    #[toql(sql="", 
+        field_handler="smart_name_handler", 
+        aux_param(name="strategy", value="quick"))]
     smart_name: String
 ```
 The aux param `strategy` is only available in the `smart_name_handler`. Only strings values are supported.

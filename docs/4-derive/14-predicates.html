@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Predicates - Toql book</title>
+        <title>Predicates - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -169,17 +169,17 @@ and retrieve all users from a certain street with <code>@street 'elmstreet'</cod
 If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="7-joins.html">on aux param</a>.</p>
 <a class="header" href="#reference" id="reference"><h2>Reference</h2></a>
 <p>The full predicate syntax is
-<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param=&quot;..&quot;, count_filter=true|false)</code>
+<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param(name&quot;..&quot;, index = .), count_filter=true|false)</code>
 where</p>
 <ul>
 <li><strong>name</strong> is the name of the predicate. It can be called in a Toql query with <code>@name ..</code>.
 If a predicate is defined on a joined struct, that predicate can be called with a path
 <code>@path_name ..</code>. See <a href="5-query-language/5-predictes.html">predicates in the query</a> for more details.</li>
-<li><strong>sql</strong> is a raw QL expression. Use <code>?</code> to insert a predicate param in the SQL,
+<li><strong>sql</strong> is a raw SQL expression. Use <code>?</code> to insert a predicate param in the SQL,
 <code>..</code> for the table alias and <code>&lt;aux_param&gt;</code> for an aux param value.</li>
 <li><strong>handler</strong> allows a custom predicate handler (build SQL with a function).
 Provide a function name without parenthesis that return a struct that implement <code>toql::prelude::PredicateHandler</code></li>
-<li><strong>on_aux_param</strong> sets the value of an aux_param. This aux param is only available when building custom joins
+<li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building custom joins.
 and can only be used when the predicate takes exactly one argument. See <a href="7-join.html">example</a>.</li>
 <li><strong>count_filter</strong> determines if a predicate used in Toql query should also be used for <a href="3-api/2-load.html">count queries</a>.
 Default is <code>false</code>.</li>

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Api - Toql book</title>
+        <title>Api - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -150,15 +150,15 @@ Notice that you must derive your structs before you can load or modify them
 with the <code>ToqlApi</code>. See the <a href="../4-derive/1-introduction.html">derive chapter</a> for details.</p>
 <p>The common <code>ToqlApi</code> trait makes it also possible to write database independend code. This is described <a href="8-backend-independence.html">here</a>.</p>
 <a class="header" href="#creating-the-backend" id="creating-the-backend"><h2>Creating the backend</h2></a>
-<p>To use the <code>ToqlApi</code> functions you need a Toql backend and the driver for your database.</p>
+<p>To use the <code>ToqlApi</code> functions you need a Toql backend for your database.</p>
 <p>Currently the following backends are available</p>
 <table><thead><tr><th>Database </th><th> Backend Crate     </th><th> Driver Crate</th></tr></thead><tbody>
 <tr><td> MySQL   </td><td> toql_mysql_async</td><td> mysql_async </td></tr>
 </tbody></table>
 <p>For MySQL add this to your <code>cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependency]
-toql = &quot;0.3&quot;
-toql_mysql_async = &quot;0.3&quot;
+toql = &quot;0.4&quot;
+toql_mysql_async = &quot;0.4&quot;
 </code></pre>
 <p>You must add <code>toql</code> together with the backend crate. The backend crate then depends on a suitable version of the driver crate.
 Normally there is no need to access the driver crate. However I you really must, the backend crate re-exports the driver crate.
@@ -167,17 +167,23 @@ For <code>toql_mysql_async</code> the driver crate can be accessed through <code
 a database connection and a cache object to hold the database mapping.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
-#fn main() {
-use mysql_async::MySql;
-use toql_mysql_async::prelude::MySqlAsync;
-use toql::prelude::Cache;
 
-let pool = mysql_async::Pool::new(database_url);
-let mut conn = pool.get_conn().await?;
+#fn main() {
+use toql::prelude::Cache;
+use toql::mock_db::MockDb;
 
 let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-let toql = MySqlAsync::from(&amp;mut conn, &amp;cache);
+// For MySQL
+// use toql_mysql_async::{prelude::MySqlAsync, mysql_async};
+//
+// let database_url = &quot;mysql://USER:PASS@localhost:3306/DATABASE&quot;;
+// let pool = mysql_async::Pool::new(database_url);
+// let mut conn = pool.get_conn().await.unwrap();
+// let toql = MySqlAsync::from(&amp;mut conn, &amp;cache);
+
+
 #}</code></pre></pre>
 <p>In a bigger project you may want to feed configuration or authentication values into your SQL.
 This is done through so called auxiliary parameters (aux params).</p>
@@ -192,25 +198,29 @@ backend object lives</li>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use mysql_async::MySql;
-use toql_mysql_async::prelude::MySqlAsync;
 use toql::prelude::{Cache, ContextBuilder};
+use toql::mock_db::MockDb;
 use std::collections::HashMap;
-
-
-let pool = mysql_async::Pool::new(database_url);
-let mut conn = pool.get_conn().await?;
 
 let mut p = HashMap::new();
 p.insert(&quot;page_limit&quot;.into(), 200.into());
 
 let context = ContextBuilder::new().with_aux_params(p).build();
 let cache = Cache::new();
-let toql = MySqlAsync::with_context(&amp;mut conn, &amp;cache, context);
+let mut toql = MockDb::with_context(&amp;cache, context);
+
+// For MySQL
+// use toql_mysql_async::{prelude::MySqlAsync, mysql_async};
+//
+// let database_url = &quot;mysql://USER:PASS@localhost:3306/DATABASE&quot;;
+// let pool = mysql_async::Pool::new(database_url);
+// let mut conn = pool.get_conn().await.unwrap();
+// let toql = MySqlAsync::with_context(&amp;mut conn, &amp;cache, context);
+
 #}</code></pre></pre>
 <p>Beside aux params <code>ContextBuilder</code> allows you</p>
 <ul>
-<li>to choose an alias format (<code>user.id</code>, <code>us1.id</code>, <code>t0.id</code>, ...)</li>
+<li>to choose an alias format (<code>user.id</code>, <code>us1.id</code>, <code>t1.id</code>, ...)</li>
 <li>set the roles for <a href="../4-derive/16-roles.html">access control</a></li>
 </ul>
 <pre><pre class="playpen"><code class="language-rust">
@@ -220,10 +230,11 @@ use toql::prelude::{ContextBuilder, AliasFormat};
 use std::collections::HashSet;
 
 let mut roles = HashSet::new();
-roles.insert(&quot;teacher&quot;, &quot;admin&quot;);
+roles.insert(&quot;teacher&quot;.to_string());
+roles.insert(&quot;admin&quot;.to_string());
 
  let context = ContextBuilder::new()
-   .with_alias(AliasFormat::Tiny)
+   .with_alias_format(AliasFormat::TinyIndex)
    .with_roles(roles)
    .build();
 #}</code></pre></pre>

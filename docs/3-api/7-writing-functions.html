@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Writing functions - Toql book</title>
+        <title>Writing functions - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -150,36 +150,26 @@
 <a class="header" href="#passing-the-database" id="passing-the-database"><h3>Passing the database</h3></a>
 <p>If you decide to pass the database you give up on database independence, but less trait bounds are needed:</p>
 <p>For MySQL this looks like this:</p>
-<p>``rust
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
 use toql::prelude::ToqlApi;
 use toql_mysql_async::prelude::{MySqlAsync, Queryable};
-fn do_stuff<C>(toql: &amp;mut MySqlAsync&lt;'_,C&gt;)
+fn do_stuff&lt;C&gt;(toql: &amp;mut MySqlAsync&lt;'_,C&gt;) 
 where C:Queryable -&gt; Resulty
 {
-let q = query!(...)
-let users = toql.load_many(&amp;q).await?;
-toql.insert_many(users, paths!(top)).await?;
-toql.update_many(users, fields!(top)).await?;
-toql.delete_many(q).await?;
-}</p>
-<pre><code>The `Queryable` trait makes the `MySqlAsync` work with a connection or a transaction.
-
-
-
-## Database independed functions
-
-It's also possible to pass a struct that implements `ToqlApi`. 
-However this requires more trait bounds to satisfy the bounds on `ToqlApi`.
-Unfortunately rust Rust compiler has a problem with [associated type bounds](https://rust-lang.github.io/rfcs/2289-associated-type-bounds.html), so it looks more complicated than it had to be.
-
-
-
-
-
-
-
-
-</code></pre>
+    let q = query!(...)
+    let users = toql.load_many(&amp;q).await?;
+    toql.insert_many(users, paths!(top)).await?;
+    toql.update_many(users, fields!(top)).await?;
+    toql.delete_many(q).await?;
+}
+#}</code></pre></pre>
+<p>The <code>Queryable</code> trait makes the <code>MySqlAsync</code> work with a connection or a transaction.</p>
+<a class="header" href="#database-independed-functions" id="database-independed-functions"><h2>Database independed functions</h2></a>
+<p>It's also possible to pass a struct that implements <code>ToqlApi</code>.
+However this requires more trait bounds to satisfy the bounds on <code>ToqlApi</code>.
+Unfortunately rust Rust compiler has a problem with <a href="https://rust-lang.github.io/rfcs/2289-associated-type-bounds.html">associated type bounds</a>, so it looks more complicated than it had to be.</p>
 
                     </main>
 

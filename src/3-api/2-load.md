@@ -9,27 +9,32 @@ If your Toql structs contain a `Vec` of other structs, the load functions issue 
 
 If you expect exactly one result, use `load_one`.
 
-```
-    use toql::prelude::{query, ToqlApi};
+```rust
+    use toql::prelude::{query, ToqlApi, Cache, Toql, ToqlError};
+    use toql::mock_db::MockDb;
+  
+    #[derive(Toql)]
+    struct User {
+      #[toql(key)]
+      id: u64,
+      title: Option<String>
+    }
 
-    let toql = ...
-    let q = query!(...);
-    let u = toql.load_one(q).await?;
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+   
+    let query = query!(User, "*, id eq 1");
+    let users = toql.load_one(query).await;
+
+    assert_eq!(users.err().unwrap(), ToqlError::NotFound);
+#    }
 ```
 The function will return `ToqlError::NotFound` if no row matched the query filter or `ToqlError::NotUnique` if more than one row matched.
 To load zero or one row use `load_page`, see below.
 
-Similarly, if you need to load multiple rows:
-
-```
-    use toql::prelude::{query, ToqlApi};
-
-    let toql = ...
-    let q = query!(...);
-    let u = toql.load_many(q).await?;
-```
-
-`load_many` returns a `Vec` with deserialized rows. 
+Similarly, if you need to load multiple rows use `load_many`, that returns a `Vec` with deserialized rows. 
 The `Vec` will be empty, if no row matched the filter criteria.
 
 `load_page` allows you to select a page with a starting point and a certain length. 
@@ -41,22 +46,34 @@ or contains count statistics that is needed for typical pagers in web apps, see 
 
 To load the first 10 -or less- rows do this:
 
+```rust
+    use toql::prelude::{query, ToqlApi, Cache, Toql, Page};
+    use toql::mock_db::MockDb;
+
+     #[derive(Toql)]
+    struct User {
+      #[toql(key)]
+      id: u64,
+      title: Option<String>
+    }
+
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+   
+    let query = query!(User, "*");
+    let (users, count_info) = toql.load_page(query, Page::Uncounted(0, 10)).await.unwrap();
+
+    assert!(users.is_empty());
+    assert!(count_info.is_none());
+# }
 ```
-    use toql::prelude::{query, ToqlApi, Page};
 
-    let toql = ...
-    let q = query!(...);
-    let (u, _) = toql.load_page(q, Page::Uncounted(0, 10)).await?;
-```
+To serve a webpage, you may also want to include count informations, call the above with
 
-To serve a webpage, you may also want to include count informations.
-
-```
-    use toql::prelude::{query, ToqlApi, Page};
-
-    let toql = ...
-    let q = query!(...);
-    let (u, c) = toql.load_page(q, Page::Counted(0, 10)).await?;
+```rust, ignore
+    let (u, c) = toql.load_page(q, Page::Counted(0, 10)).await.unwrap();
 ```
 
 The code is almost the same, but the different page argument will issue two more select statements

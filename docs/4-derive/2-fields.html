@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Fields - Toql book</title>
+        <title>Fields - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -158,63 +158,96 @@
 <li>mixedCase</li>
 </ul>
 <a class="header" href="#renaming-scheme-example" id="renaming-scheme-example"><h4>Renaming scheme example</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
-#[toql(tables=&quot;SHOUTY_SNAKE_CASE&quot;, columns=&quot;UpperCase&quot;)]
+#[toql(tables=&quot;SHOUTY_SNAKE_CASE&quot;, columns=&quot;CamelCase&quot;)]
 struct User {
     #[toql(key)]
-    user_id: u32
+    user_id: u32,
     full_name: String,
 }
-#}</code></pre></pre>
-<p>is translated into</p>
-<p><code>SELECT t0.UserId, t0.FullName FROM USER_REF t0</code></p>
+
+let cache = Cache::default();
+let mut toql = MockDb::from(&amp;cache);
+let q = query!(User, &quot;*&quot;); 
+let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), &quot;SELECT user.UserId, user.FullName FROM USER user&quot;);
+# }
+</code></pre></pre>
 <a class="header" href="#explicit-naming-example" id="explicit-naming-example"><h4>Explicit naming example</h4></a>
-<p>Use <code>table</code> an the struct and <code>column</code> on the fields to set a name.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<p>Use <code>table</code> on the struct and <code>column</code> on fields to set a explicit name.</p>
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+ 
 #[derive(Toql)]
 #[toql(table=&quot;User&quot;)]
 struct UserRef {
 
     #[toql(key, column=&quot;id&quot;)]
     user_id: u32,
-
     full_name: String,
-}
-#}</code></pre></pre>
-<p>is translated into</p>
-<p><code>SELECT t0.id, t0.full_name FROM User t0</code></p>
-<p>Use <code>column</code> also when mapping a field, that is a SQL keyword. Notice the back ticks:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[toql(column=&quot;`order`&quot;)]
-    order: u32,
-#}</code></pre></pre>
+} 
+ 
+let cache = Cache::default();
+let mut toql = MockDb::from(&amp;cache);
+
+let q = query!(UserRef, &quot;*&quot;); 
+let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), &quot;SELECT user.id, user.full_name FROM User user&quot;); 
+
+# }
+</code></pre></pre>
+<p>Use <code>column</code> also when mapping a field that is a SQL keyword. Notice the back ticks:</p>
+<pre><code class="language-rust ignore">    #[toql(column=&quot;`order`&quot;)]
+    order: u32
+</code></pre>
 <a class="header" href="#toql-query-fields" id="toql-query-fields"><h3>Toql query fields</h3></a>
 <p>Toql query fields on a struct are always mixed case, while dependencies are separated with an underscore.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
 #[toql(table=&quot;User&quot;)]
 struct UserRef {
 
     #[toql(key, column=&quot;id&quot;)]
-    id: u32
+    id: u32,
 
     full_name: String,
 
-    #[toql(join())]
-    county: Country
+    #[toql(join)]
+    country: Country
 }
-#}</code></pre></pre>
-<p>is referred to as</p>
-<p><code>id, fullName, country_id</code></p>
+#[derive(Toql)]
+struct Country {
+
+    #[toql(key)]
+    id: u32,
+    name: String,
+}
+
+
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+  
+    let q = query!(UserRef, &quot;id, fullName, country_id&quot;); 
+    let mut users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, user.full_name, user_country.id, user_country.name \
+                FROM User user \
+                JOIN (Country user_country) \
+                ON (user.country_id = user_country.id)&quot;);
+
+# }
+</code></pre></pre>
 <a class="header" href="#exclusion" id="exclusion"><h2>Exclusion</h2></a>
 <p>Fields can be excluded in several ways</p>
 <ul>
@@ -222,15 +255,17 @@ struct UserRef {
 <li><code>skip_mut</code> ensures a field is never updated, automatically added for keys and SQL expressions.</li>
 <li><code>skip_wildcard</code> removes a field from default <a href="../5-query-language/2-select.html">wildcard selection</a>, use for expensive SQL expressions or soft hiding.</li>
 </ul>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
 #[toql(table=&quot;User&quot;)]
 struct UserRef {
     
     #[toql(key, column=&quot;id&quot;)]
-    id: u32
+    id: u32,
 
     full_name: String,
 
@@ -240,10 +275,16 @@ struct UserRef {
     #[toql(skip)]
     value: String,
 
-    #[toql(join(), skip_mut)]
-    country: Country
 }
-#}</code></pre></pre>
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+
+    let q = query!(UserRef, &quot;*&quot;); 
+    let mut users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), &quot;SELECT user.id, user.full_name FROM User user&quot;);
+
+#  }
+</code></pre></pre>
 
                     </main>
 

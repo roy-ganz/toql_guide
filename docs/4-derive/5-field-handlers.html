@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Field handlers - Toql book</title>
+        <title>Field handlers - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -149,70 +149,83 @@
 </ul>
 <a class="header" href="#filter-on-fields" id="filter-on-fields"><h2>Filter on fields</h2></a>
 <p>Let's support a length function <code>LLE</code> , so that we can filter on maximum  word length</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+   use toql::prelude::{ToqlApi, DefaultFieldHandler, FieldHandler, 
+               SqlExpr, SqlBuilderError, FieldFilter, Cache, Toql,
+               ParameterMap, sql_expr, query};
+   use toql::mock_db::MockDb;
 
-#fn main() {
-use toql::prelude::{BasicFieldFilter, FieldHandler, SqlExpr, SqlBuilderError, FieldFilter};
+   struct LengthFieldHandler{
+       // The default field handler gives us default filters 
+       // such as `EQ`, `NE`, ...
+       default_handler: DefaultFieldHandler, 
+   };
 
-struct LengthFieldHandler{
-    // The default field handler gives us default filters, such as `eq`, `ne`, ...
-    default_handler: BasicFieldHandler, 
-};
-
-impl FieldHandler for PermissionFieldHandler
-{
-    fn build_filter(
-       &amp;self,
-       select: SqlExpr,        // Our column or SQL expression
-       filter: &amp;FieldFilter,   // The filter called with this field
-       aux_params: &amp;ParameterMap, // All aux params available
-   ) -&gt; Result&lt;Option&lt;SqlExpr&gt;, SqlBuilderError&gt; {
-       match filter {
-           // Support our custom LL filter that maps to the MySQL FIND_IN_FIELD function
-           FieldFilter::Fn(name, args) =&gt; match name.as_str() {
-               &quot;LLE&quot; =&gt; {
-                    if args.len() != 1 {
-                       return Err(SqlBuilderError::FilterInvalid( &quot;filter `FN LLE` expects exactly 1 argument&quot;.to_string()));
+   impl FieldHandler for LengthFieldHandler
+   {
+       fn build_filter(
+           &amp;self,
+           select: SqlExpr,            // Column or SQL expression
+           filter: &amp;FieldFilter,       // The filter called with this field
+           aux_params: &amp;ParameterMap,  // All aux params available
+       ) -&gt; Result&lt;Option&lt;SqlExpr&gt;, SqlBuilderError&gt; {
+           match filter {
+               // Support our custom LLE filter that maps 
+               // to the MySQL LENGTH function
+               FieldFilter::Fn(name, args) =&gt; match name.as_str() {
+                   &quot;LLE&quot; =&gt; {
+                       if args.len() != 1 {
+                           return Err(SqlBuilderError::FilterInvalid( 
+                               &quot;filter `FN LLE` expects exactly 1 argument&quot;.to_string()));
+                       }
+                       Ok(Some(sql_expr!(&quot;LENGTH ({}) &lt;= ?&quot;, select, &amp;args[0])))
                    }
-                   Ok(Some(sql_expr!(&quot;LENGTH ({}) &lt;= ?&quot;, select, args[0])))
-               }
-               name @ _ =&gt; Err(SqlBuilderError::FilterInvalid(name.to_string())),
-           },
-           _ =&gt; self.default_handler.build_filter(select, filter, aux_params),
+                   name @ _ =&gt; Err(SqlBuilderError::FilterInvalid(name.to_string())),
+               },
+               _ =&gt; self.default_handler.build_filter(select, filter, aux_params),
+           }
+       }
+
+   }
+
+   // Getter method for mapper
+   pub fn length_field_handler() -&gt; impl FieldHandler {
+       LengthFieldHandler{
+           default_handler: DefaultFieldHandler::new(), 
        }
    }
 
-}
+   #[derive(Toql)]
+   struct User {
+       #[toql(key)]
+       id: u64,
 
-// Getter method for mapper
-pub fn length_field_handler() -&gt; impl FieldHandler {
-   LengthFieldHandler:{
-        default_handler: BasicFieldHandler::new(), 
+       #[toql(handler=&quot;length_field_handler&quot;)]
+       name: Option&lt;String&gt;,
    }
-}
-#}</code></pre></pre>
-<p>Now we can map our filter with</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[toql(handler=&quot;length_field_handler&quot;)]
-name: String
-#}</code></pre></pre>
-<p>and use it in a query with</p>
-<pre><code class="language-toql">*, name FN LLE 5
-</code></pre>
+
+   let cache = Cache::new();
+   let mut toql = MockDb::from(&amp;cache);
+
+   let q = query!(User, &quot;name FN LLE 5&quot;); 
+   let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+   assert_eq!(toql.take_unsafe_sql(), 
+           &quot;SELECT user.id, user.name \
+           FROM User user \
+           WHERE LENGTH (user.name) &lt;= 5&quot;);
+#   }
+</code></pre></pre>
 <p>For a bigger example, check out our <a href="6-appendix/4-row-access-control.html">permission handler</a>.</p>
 <a class="header" href="#field-handlers-with-local-aux-params" id="field-handlers-with-local-aux-params"><h3>Field handlers with local aux params</h3></a>
 <p>If you want to use the same field handler in different places
 it mightly come handy to give the field handler some local context.</p>
 <p>This can be achieved with local aux_params:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-    #[toql(sql=&quot;&quot;, field_handler=&quot;smart_name_handler&quot;, aux_param(name=&quot;strategy&quot;, value=&quot;quick&quot;))]
+<pre><code class="language-rust ignore">    #[toql(sql=&quot;&quot;, 
+        field_handler=&quot;smart_name_handler&quot;, 
+        aux_param(name=&quot;strategy&quot;, value=&quot;quick&quot;))]
     smart_name: String
-#}</code></pre></pre>
+</code></pre>
 <p>The aux param <code>strategy</code> is only available in the <code>smart_name_handler</code>. Only strings values are supported.</p>
 
                     </main>

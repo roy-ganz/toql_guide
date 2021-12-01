@@ -18,40 +18,59 @@ Supported renaming schemes are
 
 #### Renaming scheme example
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
-#[toql(tables="SHOUTY_SNAKE_CASE", columns="UpperCase")]
+#[toql(tables="SHOUTY_SNAKE_CASE", columns="CamelCase")]
 struct User {
 	#[toql(key)]
-  	user_id: u32
+  	user_id: u32,
 	full_name: String,
 }
-```
-is translated into 
 
-`SELECT t0.UserId, t0.FullName FROM USER_REF t0`
+let cache = Cache::default();
+let mut toql = MockDb::from(&cache);
+let q = query!(User, "*"); 
+let mut _users = toql.load_many(&q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), "SELECT user.UserId, user.FullName FROM USER user");
+# }
+```
 
 #### Explicit naming example
-Use `table` an the struct and `column` on the fields to set a name.
+Use `table` on the struct and `column` on fields to set a explicit name.
 
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+ 
 #[derive(Toql)]
 #[toql(table="User")]
 struct UserRef {
 
 	#[toql(key, column="id")]
 	user_id: u32,
-
 	full_name: String,
-}
+} 
+ 
+let cache = Cache::default();
+let mut toql = MockDb::from(&cache);
+
+let q = query!(UserRef, "*"); 
+let mut _users = toql.load_many(&q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), "SELECT user.id, user.full_name FROM User user"); 
+
+# }
 ```
-is translated into 
 
-`SELECT t0.id, t0.full_name FROM User t0`
-
-Use `column` also when mapping a field, that is a SQL keyword. Notice the back ticks:
-```rust
-#[toql(column="`order`")]
-	order: u32,
+Use `column` also when mapping a field that is a SQL keyword. Notice the back ticks:
+```rust, ignore
+	#[toql(column="`order`")]
+	order: u32
 ```
 
 ### Toql query fields
@@ -59,24 +78,45 @@ Use `column` also when mapping a field, that is a SQL keyword. Notice the back t
 Toql query fields on a struct are always mixed case, while dependencies are separated with an underscore.
 
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
 #[toql(table="User")]
 struct UserRef {
 
 	#[toql(key, column="id")]
-	id: u32
+	id: u32,
 
 	full_name: String,
 
-	#[toql(join())]
-	county: Country
+	#[toql(join)]
+	country: Country
 }
+#[derive(Toql)]
+struct Country {
+
+	#[toql(key)]
+	id: u32,
+	name: String,
+}
+
+
+	let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+  
+	let q = query!(UserRef, "id, fullName, country_id"); 
+	let mut users = toql.load_many(&q).await.unwrap(); 
+	assert_eq!(toql.take_unsafe_sql(), 
+			"SELECT user.id, user.full_name, user_country.id, user_country.name \
+				FROM User user \
+				JOIN (Country user_country) \
+				ON (user.country_id = user_country.id)");
+
+# }
 ```
-is referred to as
-
-`id, fullName, country_id`
-
-
 
 ## Exclusion
 Fields can be excluded in several ways
@@ -86,12 +126,17 @@ Fields can be excluded in several ways
 
 
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
 #[toql(table="User")]
 struct UserRef {
 	
 	#[toql(key, column="id")]
-	id: u32
+	id: u32,
 
 	full_name: String,
 
@@ -101,7 +146,13 @@ struct UserRef {
 	#[toql(skip)]
 	value: String,
 
-	#[toql(join(), skip_mut)]
-	country: Country
 }
+	let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+
+	let q = query!(UserRef, "*"); 
+	let mut users = toql.load_many(&q).await.unwrap(); 
+	assert_eq!(toql.take_unsafe_sql(), "SELECT user.id, user.full_name FROM User user");
+
+#  }
 ```

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Roles - Toql book</title>
+        <title>Roles - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -144,7 +144,6 @@
 <p>It's possible to restrict access to fields and structs with boolean role expressions.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
-
 #fn main() {
 #[derive(Toql)] {
 #[toql(roles(insert=&quot;poweruser&quot;, delete=&quot;poweruser&quot;))
@@ -175,6 +174,97 @@ let context = ContextBuilder::new()
 <p>See <a href="3-api/1-introduction.html">here</a> for how to get a backend.</p>
 <p>Notice that roles can restrict access to columns but not to rows.
 For row access control, check out the <a href="../6-appendix/4-row-access-control.html">chapter</a> in the appendix.</p>
+<a class="header" href="#load" id="load"><h2>Load</h2></a>
+<p>It's possible to restrict loading, filtering and ordering of a struct or individual fields, joins and merges.</p>
+<p>Let's assume a <code>struct Book</code>:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)]
+#[toql(roles(load =&quot;book_role&quot;))]
+struct Book {
+    #[toql(key)]
+    id : u64
+
+    #[toql(roles(load=&quot;author_role&quot;))]
+    title Option&lt;String&gt;&gt;,
+
+    #[toql(roles(load=&quot;author_role&quot;))]
+    author: Option&lt;Join&lt;User&gt;&gt;,
+
+    #[toql(roles(load=&quot;edition_role&quot;))]
+    editions: Option&lt;Vec&lt;Edition&gt;&gt;,
+}
+#}</code></pre></pre>
+<p>To load anything from the book, the user requires the <code>book_role</code>.
+So to load the book's title the user requires the roles <code>book_role</code> and <code>author_role</code>.</p>
+<a class="header" href="#preselected-fields" id="preselected-fields"><h2>Preselected fields</h2></a>
+<p>Notice that restricting preselected fields is like restricting the entire struct. See here:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)]
+#[toql(roles(load =&quot;book_role&quot;))]
+struct Book {
+    #[toql(key)]
+    id : u64
+
+    #[toql(roles(load=&quot;author_role&quot;))]
+    title String
+}
+#}</code></pre></pre>
+<p>Here Toql needs to load the title field in order to deserialize the struct. Because <code>title</code> is role restricted an error is raised for a missing <code>autor_role</code>.</p>
+<a class="header" href="#wildcard-behaviour" id="wildcard-behaviour"><h2>Wildcard behaviour</h2></a>
+<p>If all fields from <code>Book</code> are selected with a wildcard <code>*</code> fields that do not match the role restriction are simply skipped. However, if such a field is selected explictly in the query then an error is raised.</p>
+<a class="header" href="#update" id="update"><h2>Update</h2></a>
+<p>To restrict updating a struct or individual fields:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)] {
+#[toql(roles(update=&quot;book_role&quot;))
+struct Book
+
+    #[toql(key)]
+    id : u64
+
+    #[toql(roles(update=&quot;author_role&quot;))]
+    title Option&lt;String&gt;&gt;,
+
+    #[toql(roles(update=&quot;author_role&quot;))]
+    author: Option&lt;Join&lt;User&gt;&gt;,
+
+    #[toql(roles(update=&quot;edition_role&quot;))]
+    editions: Option&lt;Vec&lt;Edition&gt;&gt;,
+}
+#}</code></pre></pre>
+<p>To update anything on the book, the user requires the <code>book_role</code>.
+So to update the book's title the user requires the roles <code>book_role</code> and <code>author_role</code>.</p>
+<p>The role restriction on the <code>author</code> join applies only to the foreign key <code>author_id</code> in table <code>Book</code>, not to the joined <code>User</code>.
+To restrict the joined <code>User</code> put a role restriction <code>#[toql(roles(update=&quot;user_role&quot;))</code> on top of the struct <code>User</code></p>
+<p>Update restrictions on partials joins are not allowed, since partial joins have no foreign key:
+Partial joins share the same primary key.</p>
+<p>Likewise the role restriction on the <code>editions</code> merge applies only to resizing the <code>Vec</code> not to the fields on the edition table.
+See the chapter on <a href="../3-api/5-update.html">updating</a> for details.</p>
+<a class="header" href="#wildcard-behaviour-1" id="wildcard-behaviour-1"><h2>Wildcard behaviour</h2></a>
+<p>Fields that have an invalid role expression are skipped for the field list <code>*</code>. However if the field name is explicitly mentioned in the field list, then an error occurs. This behaviour is similar to loading.</p>
+<a class="header" href="#insert--delete" id="insert--delete"><h2>Insert / Delete</h2></a>
+<p>To restrict insertion or deltetion of a struct, attribute the struct like so:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)] {
+#[toql(roles(insert=&quot;book_role&quot;, delete=&quot;book_role&quot;))
+struct Book
+
+    #[toql(key)]
+    id : u64
+
+    title Option&lt;String&gt;&gt;,
+    author: Option&lt;Join&lt;User&gt;&gt;,
+    editions: Option&lt;Vec&lt;Edition&gt;&gt;,
+}
+#}</code></pre></pre>
 
                     </main>
 

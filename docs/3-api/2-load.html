@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Load - Toql book</title>
+        <title>Load - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -145,22 +145,30 @@
 <p>All loading functions take a <a href="../5-query-language/1-introduction.html">Toql query</a> and will translate it into SQL SELECT statement(s). The resulting rows will be deserialized and returned.</p>
 <p>If your Toql structs contain a <code>Vec</code> of other structs, the load functions issue multiple SELECT statements and merge the results.</p>
 <p>If you expect exactly one result, use <code>load_one</code>.</p>
-<pre><code>    use toql::prelude::{query, ToqlApi};
+<pre><pre class="playpen"><code class="language-rust">    use toql::prelude::{query, ToqlApi, Cache, Toql, ToqlError};
+    use toql::mock_db::MockDb;
+  
+    #[derive(Toql)]
+    struct User {
+      #[toql(key)]
+      id: u64,
+      title: Option&lt;String&gt;
+    }
 
-    let toql = ...
-    let q = query!(...);
-    let u = toql.load_one(q).await?;
-</code></pre>
+#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+   
+    let query = query!(User, &quot;*, id eq 1&quot;);
+    let users = toql.load_one(query).await;
+
+    assert_eq!(users.err().unwrap(), ToqlError::NotFound);
+#    }
+</code></pre></pre>
 <p>The function will return <code>ToqlError::NotFound</code> if no row matched the query filter or <code>ToqlError::NotUnique</code> if more than one row matched.
 To load zero or one row use <code>load_page</code>, see below.</p>
-<p>Similarly, if you need to load multiple rows:</p>
-<pre><code>    use toql::prelude::{query, ToqlApi};
-
-    let toql = ...
-    let q = query!(...);
-    let u = toql.load_many(q).await?;
-</code></pre>
-<p><code>load_many</code> returns a <code>Vec</code> with deserialized rows.
+<p>Similarly, if you need to load multiple rows use <code>load_many</code>, that returns a <code>Vec</code> with deserialized rows.
 The <code>Vec</code> will be empty, if no row matched the filter criteria.</p>
 <p><code>load_page</code> allows you to select a page with a starting point and a certain length.
 It returns a <code>Vec</code> and count information.</p>
@@ -168,18 +176,30 @@ It returns a <code>Vec</code> and count information.</p>
 or contains count statistics that is needed for typical pagers in web apps, see below.
 (After all Toql was initially created to serve web pages.)</p>
 <p>To load the first 10 -or less- rows do this:</p>
-<pre><code>    use toql::prelude::{query, ToqlApi, Page};
+<pre><pre class="playpen"><code class="language-rust">    use toql::prelude::{query, ToqlApi, Cache, Toql, Page};
+    use toql::mock_db::MockDb;
 
-    let toql = ...
-    let q = query!(...);
-    let (u, _) = toql.load_page(q, Page::Uncounted(0, 10)).await?;
-</code></pre>
-<p>To serve a webpage, you may also want to include count informations.</p>
-<pre><code>    use toql::prelude::{query, ToqlApi, Page};
+     #[derive(Toql)]
+    struct User {
+      #[toql(key)]
+      id: u64,
+      title: Option&lt;String&gt;
+    }
 
-    let toql = ...
-    let q = query!(...);
-    let (u, c) = toql.load_page(q, Page::Counted(0, 10)).await?;
+#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+   
+    let query = query!(User, &quot;*&quot;);
+    let (users, count_info) = toql.load_page(query, Page::Uncounted(0, 10)).await.unwrap();
+
+    assert!(users.is_empty());
+    assert!(count_info.is_none());
+# }
+</code></pre></pre>
+<p>To serve a webpage, you may also want to include count informations, call the above with</p>
+<pre><code class="language-rust ignore">    let (u, c) = toql.load_page(q, Page::Counted(0, 10)).await.unwrap();
 </code></pre>
 <p>The code is almost the same, but the different page argument will issue two more select statements
 to return the <em>filtered</em> page length and the <em>total</em> page length. Let's see what those are:</p>

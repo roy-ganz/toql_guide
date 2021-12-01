@@ -1,18 +1,19 @@
 [package]
 name = "guide"
-version = "0.1.0"
+version = "0.4.0"
 authors = ["Roy Ganz <roy.ganz@glanis.biz>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-toql = {git="https://github.com/roy-ganz/toql.git", branch="v0.3"}
-toql_mock_db = {git="https://github.com/roy-ganz/toql_mock_db.git" }
+tokio = {version = "1", features=["macros"]}
+
+[dev-dependencies]
+toql = {git="https://github.com/roy-ganz/toql.git"}
+toql_mysql_async = {git="https://github.com/roy-ganz/toql_mysql_async.git"}
 
 
 [patch.'https://github.com/roy-ganz/toql.git']
-toql = {path= "../../toql" }
+toql= {path="../toql"}
 
-[patch.'https://github.com/roy-ganz/toql_mock_db.git']
-toql_mock_db = {path= "../../toql_mock_db" }

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Toql book</title>
+        <title>Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="print.html" title="Print this book" aria-label="Print this book">
@@ -174,7 +174,7 @@ relationship to one or many tables.</li>
 <li>The field also determines the field name or in case of a relationship the path name in the <a href="5-query-language/1-introduction.html">Toql query</a></li>
 </ul>
 <p>A struct may map only some columns of a table and also multiple structs may refer to the same table. Structs are rather 'views' to a table.</p>
-<p>A derived struct can then be inserted, updated, deleted and loaded from your database. To do that you must call the <a href="3-api/1-introduction.html">Toql API functions</a> with a query string or just a list of fields or paths.</p>
+<p>A derived struct can then be inserted, updated, deleted and loaded from your database. To do that you must call the <a href="3-api/1-introduction.html">Toql API functions</a> with a query string or a list of field names or paths.</p>
 <p>Here the typical flow in a web environment:</p>
 <ol>
 <li>A web client sends a Toql query to the REST Server.</li>
@@ -195,15 +195,15 @@ Notice that you must derive your structs before you can load or modify them
 with the <code>ToqlApi</code>. See the <a href="3-api/../4-derive/1-introduction.html">derive chapter</a> for details.</p>
 <p>The common <code>ToqlApi</code> trait makes it also possible to write database independend code. This is described <a href="3-api/8-backend-independence.html">here</a>.</p>
 <a class="header" href="#creating-the-backend" id="creating-the-backend"><h2>Creating the backend</h2></a>
-<p>To use the <code>ToqlApi</code> functions you need a Toql backend and the driver for your database.</p>
+<p>To use the <code>ToqlApi</code> functions you need a Toql backend for your database.</p>
 <p>Currently the following backends are available</p>
 <table><thead><tr><th>Database </th><th> Backend Crate     </th><th> Driver Crate</th></tr></thead><tbody>
 <tr><td> MySQL   </td><td> toql_mysql_async</td><td> mysql_async </td></tr>
 </tbody></table>
 <p>For MySQL add this to your <code>cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependency]
-toql = &quot;0.3&quot;
-toql_mysql_async = &quot;0.3&quot;
+toql = &quot;0.4&quot;
+toql_mysql_async = &quot;0.4&quot;
 </code></pre>
 <p>You must add <code>toql</code> together with the backend crate. The backend crate then depends on a suitable version of the driver crate.
 Normally there is no need to access the driver crate. However I you really must, the backend crate re-exports the driver crate.
@@ -212,17 +212,23 @@ For <code>toql_mysql_async</code> the driver crate can be accessed through <code
 a database connection and a cache object to hold the database mapping.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
-#fn main() {
-use mysql_async::MySql;
-use toql_mysql_async::prelude::MySqlAsync;
-use toql::prelude::Cache;
 
-let pool = mysql_async::Pool::new(database_url);
-let mut conn = pool.get_conn().await?;
+#fn main() {
+use toql::prelude::Cache;
+use toql::mock_db::MockDb;
 
 let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-let toql = MySqlAsync::from(&amp;mut conn, &amp;cache);
+// For MySQL
+// use toql_mysql_async::{prelude::MySqlAsync, mysql_async};
+//
+// let database_url = &quot;mysql://USER:PASS@localhost:3306/DATABASE&quot;;
+// let pool = mysql_async::Pool::new(database_url);
+// let mut conn = pool.get_conn().await.unwrap();
+// let toql = MySqlAsync::from(&amp;mut conn, &amp;cache);
+
+
 #}</code></pre></pre>
 <p>In a bigger project you may want to feed configuration or authentication values into your SQL.
 This is done through so called auxiliary parameters (aux params).</p>
@@ -237,25 +243,29 @@ backend object lives</li>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use mysql_async::MySql;
-use toql_mysql_async::prelude::MySqlAsync;
 use toql::prelude::{Cache, ContextBuilder};
+use toql::mock_db::MockDb;
 use std::collections::HashMap;
-
-
-let pool = mysql_async::Pool::new(database_url);
-let mut conn = pool.get_conn().await?;
 
 let mut p = HashMap::new();
 p.insert(&quot;page_limit&quot;.into(), 200.into());
 
 let context = ContextBuilder::new().with_aux_params(p).build();
 let cache = Cache::new();
-let toql = MySqlAsync::with_context(&amp;mut conn, &amp;cache, context);
+let mut toql = MockDb::with_context(&amp;cache, context);
+
+// For MySQL
+// use toql_mysql_async::{prelude::MySqlAsync, mysql_async};
+//
+// let database_url = &quot;mysql://USER:PASS@localhost:3306/DATABASE&quot;;
+// let pool = mysql_async::Pool::new(database_url);
+// let mut conn = pool.get_conn().await.unwrap();
+// let toql = MySqlAsync::with_context(&amp;mut conn, &amp;cache, context);
+
 #}</code></pre></pre>
 <p>Beside aux params <code>ContextBuilder</code> allows you</p>
 <ul>
-<li>to choose an alias format (<code>user.id</code>, <code>us1.id</code>, <code>t0.id</code>, ...)</li>
+<li>to choose an alias format (<code>user.id</code>, <code>us1.id</code>, <code>t1.id</code>, ...)</li>
 <li>set the roles for <a href="3-api/../4-derive/16-roles.html">access control</a></li>
 </ul>
 <pre><pre class="playpen"><code class="language-rust">
@@ -265,10 +275,11 @@ use toql::prelude::{ContextBuilder, AliasFormat};
 use std::collections::HashSet;
 
 let mut roles = HashSet::new();
-roles.insert(&quot;teacher&quot;, &quot;admin&quot;);
+roles.insert(&quot;teacher&quot;.to_string());
+roles.insert(&quot;admin&quot;.to_string());
 
  let context = ContextBuilder::new()
-   .with_alias(AliasFormat::Tiny)
+   .with_alias_format(AliasFormat::TinyIndex)
    .with_roles(roles)
    .build();
 #}</code></pre></pre>
@@ -277,22 +288,30 @@ roles.insert(&quot;teacher&quot;, &quot;admin&quot;);
 <p>All loading functions take a <a href="3-api/../5-query-language/1-introduction.html">Toql query</a> and will translate it into SQL SELECT statement(s). The resulting rows will be deserialized and returned.</p>
 <p>If your Toql structs contain a <code>Vec</code> of other structs, the load functions issue multiple SELECT statements and merge the results.</p>
 <p>If you expect exactly one result, use <code>load_one</code>.</p>
-<pre><code>    use toql::prelude::{query, ToqlApi};
+<pre><pre class="playpen"><code class="language-rust">    use toql::prelude::{query, ToqlApi, Cache, Toql, ToqlError};
+    use toql::mock_db::MockDb;
+  
+    #[derive(Toql)]
+    struct User {
+      #[toql(key)]
+      id: u64,
+      title: Option&lt;String&gt;
+    }
 
-    let toql = ...
-    let q = query!(...);
-    let u = toql.load_one(q).await?;
-</code></pre>
+#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+   
+    let query = query!(User, &quot;*, id eq 1&quot;);
+    let users = toql.load_one(query).await;
+
+    assert_eq!(users.err().unwrap(), ToqlError::NotFound);
+#    }
+</code></pre></pre>
 <p>The function will return <code>ToqlError::NotFound</code> if no row matched the query filter or <code>ToqlError::NotUnique</code> if more than one row matched.
 To load zero or one row use <code>load_page</code>, see below.</p>
-<p>Similarly, if you need to load multiple rows:</p>
-<pre><code>    use toql::prelude::{query, ToqlApi};
-
-    let toql = ...
-    let q = query!(...);
-    let u = toql.load_many(q).await?;
-</code></pre>
-<p><code>load_many</code> returns a <code>Vec</code> with deserialized rows.
+<p>Similarly, if you need to load multiple rows use <code>load_many</code>, that returns a <code>Vec</code> with deserialized rows.
 The <code>Vec</code> will be empty, if no row matched the filter criteria.</p>
 <p><code>load_page</code> allows you to select a page with a starting point and a certain length.
 It returns a <code>Vec</code> and count information.</p>
@@ -300,18 +319,30 @@ It returns a <code>Vec</code> and count information.</p>
 or contains count statistics that is needed for typical pagers in web apps, see below.
 (After all Toql was initially created to serve web pages.)</p>
 <p>To load the first 10 -or less- rows do this:</p>
-<pre><code>    use toql::prelude::{query, ToqlApi, Page};
+<pre><pre class="playpen"><code class="language-rust">    use toql::prelude::{query, ToqlApi, Cache, Toql, Page};
+    use toql::mock_db::MockDb;
 
-    let toql = ...
-    let q = query!(...);
-    let (u, _) = toql.load_page(q, Page::Uncounted(0, 10)).await?;
-</code></pre>
-<p>To serve a webpage, you may also want to include count informations.</p>
-<pre><code>    use toql::prelude::{query, ToqlApi, Page};
+     #[derive(Toql)]
+    struct User {
+      #[toql(key)]
+      id: u64,
+      title: Option&lt;String&gt;
+    }
 
-    let toql = ...
-    let q = query!(...);
-    let (u, c) = toql.load_page(q, Page::Counted(0, 10)).await?;
+#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+   
+    let query = query!(User, &quot;*&quot;);
+    let (users, count_info) = toql.load_page(query, Page::Uncounted(0, 10)).await.unwrap();
+
+    assert!(users.is_empty());
+    assert!(count_info.is_none());
+# }
+</code></pre></pre>
+<p>To serve a webpage, you may also want to include count informations, call the above with</p>
+<pre><code class="language-rust ignore">    let (u, c) = toql.load_page(q, Page::Counted(0, 10)).await.unwrap();
 </code></pre>
 <p>The code is almost the same, but the different page argument will issue two more select statements
 to return the <em>filtered</em> page length and the <em>total</em> page length. Let's see what those are:</p>
@@ -348,20 +379,41 @@ For the <em>total page count</em> only filters are used on fields that are liste
 <p>The <code>query!</code> macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up
 as compiler errors!</p>
 <p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here (This assumes a Toql derived User struct):</p>
-<pre><code>use toql::prelude::query;
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+use toql::prelude::{query, Toql};
+
+#[derive(Toql)]
+struct User {
+    #[toql(key)]
+    id: u64,
+    name: String
+}
+
 let user_id = 5;
 let q = query!(User, &quot;*, id eq ?&quot;,  user_id);
-</code></pre>
+#}</code></pre></pre>
 <p>To include query parameters just insert a question mark in the query string and provide the parameter after the string.</p>
 <p>In the example above it would also be possible to put the number 5 directly into the query string, since it's a constant.
 The resulting SQL would be the same as Toql extracts the parameter in either case to prevent SQL injections.</p>
 <p>The Toql query only works with numbers and strings, see <code>SqlArg</code>.
 However this is not be a problem: Since database columns have a type, the database is able convert a string or number into its column type.</p>
 <p>It's also possible to include other queries into a query. Consider this:</p>
-<pre><code>use toql::prelude::query;
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
+use toql::prelude::query;
 let q1 = query!(User, &quot;id eq ?&quot;, 5);
 let q = query!(User, &quot;*, {}&quot;, q1);
-</code></pre>
+#}</code></pre></pre>
 <p>Here we include the query <code>q1</code> into <code>q</code>. Since queries are typesafe, so you can only include queries of the same type.</p>
 <a class="header" href="#working-with-keys" id="working-with-keys"><h3>Working with keys</h3></a>
 <p>When entities have composite keys or you want to write generic code it's easier to work with keys. Key structs are automatically derived from the <code>Toql</code> derive and are located where the struct is. Keys contain all fields from the struct that are marked with <code>#[toql(key)]</code>.</p>
@@ -369,11 +421,18 @@ let q = query!(User, &quot;*, {}&quot;, q1);
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use toql::prelude::query;
+use toql::prelude::{query, Query};
+# use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
 let k = UserKey::from(5); // Easier than UserKey{id:5};
-let q1 = query!(User, &quot;id eq ?&quot;, k);
-let q2 = query!(User, &quot;*, {}&quot;, Query::from(k));
+let q1 = query!(User, &quot;id eq ?&quot;, &amp;k);
+let q2 = query!(User, &quot;*, {}&quot;, Query::from(&amp;k));
 let q3 = query!(User, &quot;*, {}&quot;, k);
 #}</code></pre></pre>
 <p>With multiple keys you can do this:</p>
@@ -381,10 +440,17 @@ let q3 = query!(User, &quot;*, {}&quot;, k);
 # #![allow(unused_variables)]
 #fn main() {
 use toql::prelude::{query, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
 let ks = vec![UserKey::from(1), UserKey::from(2)];
 
-let q4 = query!(User, &quot;*, id in ?&quot;, ks);
+let q4 = query!(User, &quot;*, id in ?&quot;, &amp;ks);
 
 let qk = ks.iter().collect::&lt;Query&lt;_&gt;&gt;();
 let q5 = query!(User, &quot;*, {}&quot;, qk);
@@ -395,10 +461,16 @@ let q5 = query!(User, &quot;*, {}&quot;, qk);
 # #![allow(unused_variables)]
 #fn main() {
 use toql::prelude::{query, Keyed, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
+let e = User{id:1, name: &quot;User 1&quot;.to_string()};
 
-let e = User{id:1};
-
-let q5 =  query!(User, &quot;{}&quot;, e.key())
+let q5 =  query!(User, &quot;{}&quot;, e.key());
 let q6 =  Query::from(e.key());
 #}</code></pre></pre>
 <p>Both <code>q5</code> and<code>q6</code> end up the same.</p>
@@ -407,8 +479,16 @@ let q6 =  Query::from(e.key());
 # #![allow(unused_variables)]
 #fn main() {
 use toql::prelude::{query, MapKey, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
-let es = vec![User{id:1}, User{id:2}];
+let es = vec![ User{ id:1, name:&quot;User 1&quot;.to_string()}, 
+                User{ id:2, name: &quot;User 2&quot;.to_string()}];
 
 let qk = es.iter().map_key().collect::&lt;Query&lt;_&gt;&gt;();
 let q7 = query!(User, &quot;*, {}&quot;, qk);
@@ -419,11 +499,22 @@ If you collect keys, they will always be concatenated with <em>OR</em>, queries 
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-let ks = Vec[UserKey{id:5}, UserKey{id:6}];
-let q8 = ks.iter().collect::&lt;Query&lt;_&gt;&gt;(); // -&gt; query!(User, &quot;(id eq5; id eq 6)&quot;)
+use toql::prelude::{query, Query};
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 
-let q9 = query!(User, &quot;username&quot;);
-let q10 = [q9, q8].iter().collect&lt;Query&lt;_&gt;&gt;(); // -&gt; query!(User, &quot;username, (id eq 5; id eq 6)&quot;)
+let ks = vec![UserKey{id:5}, UserKey{id:6}];
+let q8 :Query&lt;User&gt; = ks.into_iter().collect(); 
+assert_eq!(q8.to_string(), &quot;(id EQ 5;id EQ 6)&quot;);
+
+let q9 = query!(User, &quot;name&quot;);
+let q10 :Query&lt;User&gt; = vec![q9, q8].into_iter().collect(); 
+assert_eq!(q10.to_string(), &quot;name,(id EQ 5;id EQ 6)&quot;);
 
 #}</code></pre></pre>
 <a class="header" href="#the-intoquery-trait" id="the-intoquery-trait"><h3>The <code>Into&lt;Query&gt;</code> trait</h3></a>
@@ -433,15 +524,22 @@ You can also implement this trait for you own types. Let's assume a book categor
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use toql::prelude::Query;
+use toql::prelude::{query, Query, Toql};
+
+#[derive(Toql)]
+struct Book {
+    #[toql(key)]
+    id: u64,
+    category: Option&lt;String&gt;
+}
 
 enum BookCategory {
     Novel,
     Cartoon
 }
-impl Into&lt;Query&lt;Book&gt; for BookCategory {
-    pub fn info(&amp;self) {
-       query!(Book, &quot;category eq ?&quot;, 
+impl Into&lt;Query&lt;Book&gt;&gt; for BookCategory {
+    fn into(self) -&gt; Query&lt;Book&gt; {
+       query!(Book, &quot;category EQ ?&quot;, 
        match self {
         Novel =&gt; &quot;NOVEL&quot;,
         Cartoon =&gt; &quot;CARTOON&quot;    
@@ -449,27 +547,40 @@ impl Into&lt;Query&lt;Book&gt; for BookCategory {
     }
 }
 
-#}</code></pre></pre>
-<p>Now use it like this</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+// Now use it like so
 let q = query!(Book, &quot;*, {}&quot;, BookCategory::Novel);
+assert_eq!(q.to_string(), &quot;*,category EQ 'NOVEL'&quot;);
 #}</code></pre></pre>
 <a class="header" href="#example-2-adding-an-authorization-filter-to-the-query" id="example-2-adding-an-authorization-filter-to-the-query"><h4>Example 2: Adding an authorization filter to the query</h4></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use toql::prelude::{QueryWith, Query, Field}
+use toql::prelude::{QueryWith, Query, Field, QueryFields, Toql};
+   
+#[derive(Toql)]
+struct Book {
+    #[toql(key)]
+    id: u64,
+    category: Option&lt;String&gt;,
+    #[toql(join)]
+    author: Option&lt;User&gt;
+}
+#[derive(Toql)]
+struct User {
+    #[toql(key)]
+    id: u64,
+    name: Option&lt;String&gt;,
+}
+
 struct Auth {
     user_id: u64
 }
 impl Into&lt;Query&lt;Book&gt;&gt; for Auth {
-    pub fn into(self) -&gt; Query&lt;Book&gt; {
+    fn into(self) -&gt; Query&lt;Book&gt; {
 
         // This time with the builder methods for educational reasons
-        // In production do this query!(User, &quot;authorId eq ?&quot;, self.user_id)
-        Query::from(Book::fields().author_id().eq(self.user_id))
+        // In production do `query!(User, &quot;author_id eq ?&quot;, self.user_id)`
+        Query::from(Book::fields().author().id().eq(self.user_id))
     }
 }
 #}</code></pre></pre>
@@ -477,12 +588,14 @@ impl Into&lt;Query&lt;Book&gt;&gt; for Auth {
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use toql::prelude::{ Query, Field}
+use toql::prelude::{Query, Field};
+
 struct Auth {
     author_id: u64
 }
+
 impl&lt;T&gt; Into&lt;Query&lt;T&gt;&gt; for Auth {
-    pub fn into(&amp;self) -&gt; Query&lt;T&gt;{
+    fn into(self) -&gt; Query&lt;T&gt;{
         Query::from(Field::from(&quot;authorId&quot;).eq(self.author_id))
     }
 }
@@ -493,8 +606,29 @@ impl&lt;T&gt; Into&lt;Query&lt;T&gt;&gt; for Auth {
 # #![allow(unused_variables)]
 #fn main() {
 use toql::prelude::query;
-let auth = Auth {author: 5};
+#   use toql::prelude::{Query, Field, Toql};
+#   enum BookCategory {
+#       Novel,
+#       Cartoon
+#   }
+#   #[derive(Toql)]
+#   struct Book {
+#       #[toql(key)]
+#       id: u64,
+#       category: Option&lt;String&gt;
+#   }
+#   struct Auth {
+#       author_id: u64
+#   }
+#   impl&lt;T&gt; Into&lt;Query&lt;T&gt;&gt; for Auth {
+#       fn into(self) -&gt; Query&lt;T&gt;{
+#           Query::from(Field::from(&quot;authorId&quot;).eq(self.author_id))
+#       }
+#   }
+
+let auth = Auth {author_id: 5};
 let q = query!(Book, &quot;*, {}&quot;, auth);
+assert_eq!(q.to_string(), &quot;*,authorId EQ 5&quot;);
 #}</code></pre></pre>
 <a class="header" href="#the-querywith-trait" id="the-querywith-trait"><h3>The <code>QueryWith</code> trait</h3></a>
 <p>The <code>query!</code> macro produces a <code>Query</code> type and can further be altered using all methods from that type.
@@ -504,11 +638,13 @@ This is more powerful than <code>Into&lt;Query&gt;</code> because you can also a
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::{QueryWith, Query};
+
 struct Config {
     limit_pages: u64
 }
-impl QueryWith for Config {
-    pub fn with(&amp;self, query: Query&lt;T&gt;) {
+impl&lt;T&gt; QueryWith&lt;T&gt; for Config {
+    fn with(&amp;self, query: Query&lt;T&gt;) -&gt; Query&lt;T&gt; {
         query.aux_param(&quot;limit_pages&quot;, self.limit_pages)
     }
 }
@@ -517,10 +653,28 @@ impl QueryWith for Config {
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use toql::prelude::query;
+use toql::prelude::{query, SqlArg};
+#   use toql::prelude::{Toql, Query, QueryWith};
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
+#   struct Config {
+#       limit_pages: u64
+#   }
+#   impl&lt;T&gt; QueryWith&lt;T&gt; for Config {
+#       fn with(&amp;self, query: Query&lt;T&gt;) -&gt; Query&lt;T&gt; {
+#           query.aux_param(&quot;limit_pages&quot;, self.limit_pages)
+#       }
+#   }
+
 let config = Config {limit_pages: 200};
 let k = UserKey::from(5);
-let q = query!(User, &quot;*, {}&quot;, k.to_query()).with(config);
+let q = query!(User, &quot;*, {}&quot;, k).with(config);
+assert_eq!(q.to_string(), &quot;*,id EQ 5&quot;);
+assert_eq!(q.aux_params.get(&quot;limit_pages&quot;), Some(&amp;SqlArg::U64(200)));
 #}</code></pre></pre>
 <a class="header" href="#parsing-queries" id="parsing-queries"><h3>Parsing queries</h3></a>
 <p>Use the query parser to turn a string into a <code>Query</code> type.
@@ -529,24 +683,52 @@ wrong field names or paths will be rejected later when using the query.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-use toql::prelude::Parser;
-
+use toql::prelude::QueryParser;
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct User {
+#       #[toql(key)]
+#       id: u64,
+#       name: String
+#   }
 let s = &quot;*, id eq 5&quot;;
 
 let q = QueryParser::parse::&lt;User&gt;(s).unwrap();
+assert_eq!(q.to_string(), &quot;*,id EQ 5&quot;);
 #}</code></pre></pre>
 <a class="header" href="#inserts" id="inserts"><h2>Inserts</h2></a>
 <p>There are two insert functions: <code>insert_one</code>, and <code>insert_many</code>.</p>
 <p>The are used like so:</p>
-<pre><code>use toql::prelude::{ToqlApi, paths};
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+use toql::prelude::{Cache, Toql, ToqlApi, paths};
+use toql::mock_db::MockDb;
 
-let u = User {id:0, title: &quot;hello&quot;.to_string(), adress: None};
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+    address: Option&lt;String&gt;
+}
 
-toql.insert_one(&amp;mut u, paths!(top)).await?;
-toql.insert_one(&amp;mut u, paths!(User, &quot;&quot;)).await?;
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-toql.insert_many(&amp;[&amp;mut u], paths!(top)).await?;
-</code></pre>
+let mut u = User { 
+                id:0, 
+                name: &quot;Joe&quot;.to_string(), 
+                address: None
+            };
+toql.insert_one(&amp;mut u, paths!(top)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;INSERT INTO User (name, address) VALUES ('Joe', DEFAULT)&quot;);
+assert_eq!(u.id, 100);
+
+toql.insert_one(&amp;mut u, paths!(User, &quot;&quot;)).await.unwrap();
+toql.insert_many::&lt;User,_&gt;(&amp;mut [&amp;mut u], paths!(top)).await.unwrap();
+#   }
+</code></pre></pre>
 <p>In the example above the first <code>insert_one</code> will insert <code>u</code> into the database,
 load back the generated id and sets it on <code>u</code>.
 The second <code>insert_one</code> makes a copy of <code>u</code> and again refreshes its <code>id</code> field.</p>
@@ -581,23 +763,42 @@ joins will also be inserted. There is no need to mention these dependencies in t
 <a class="header" href="#updates" id="updates"><h2>Updates</h2></a>
 <p>There are two update functions: <code>update_one</code> and <code>update_many</code>.</p>
 <p>They are used like so:</p>
-<pre><code>use toql::prelude::{ToqlApi, fields};
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+use toql::prelude::{Cache, Toql, ToqlApi, fields};
+use toql::mock_db::MockDb;
 
-let u = User {id:27, title: &quot;hello&quot;.to_string(), address: None};
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+    address: Option&lt;String&gt;
+}
 
-toql.update_one(&amp;mut u, fields!(top))?;
-toql.update_one(&amp;mut u, fields!(User, &quot;*&quot;))?;
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-toql.update_many(&amp;[&amp;mut u], fields!(top))?;
-</code></pre>
-<p>In the example above all three statements do the same.</p>
+let mut user = User {id:27, name: &quot;Susan&quot;.to_string(), address: None};
+
+toql.update_one(&amp;mut user, fields!(top)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;UPDATE User SET name = \'Susan\' WHERE id = 27&quot;);
+
+toql.update_one(&amp;mut user, fields!(User, &quot;*&quot;)).await.unwrap();
+
+toql.update_many::&lt;User, _&gt;(&amp;mut [&amp;mut user], fields!(top)).await.unwrap();
+toql.update_many(&amp;mut [user], fields!(top)).await.unwrap();
+#   }
+</code></pre></pre>
+<p>In the example above all four statements do the same.</p>
 <a class="header" href="#the-fields-macro" id="the-fields-macro"><h3>The fields! macro</h3></a>
 <p>The <code>fields!</code> macro compiles a list of fields. Any invalid path or field name shows up at compile time.</p>
 <p>The update function will consider all fields from the field list to update. Optional fields will only
 be updated if they contain some value. See <a href="3-api/4-derive/12-update.html">the mapping</a> for details.</p>
 <a class="header" href="#joins" id="joins"><h4>Joins</h4></a>
 <p>You can update only the foreign key of a join or field from the join. Consider this field list:</p>
-<pre><code>let f = fields!(User, &quot;*, address, address_*, address_id&quot;)
+<pre><code class="language-rust ignore">let f = fields!(User, &quot;*, address, address_*, address_id&quot;);
 </code></pre>
 <p>With <code>*</code> we consider all fields from User for updating,
 <code>address</code> will update the foreign key to <code>Address</code> in the <code>User</code> table,
@@ -612,7 +813,7 @@ It's just mentioned explicitly for the purpose of learning.</p>
 <li>or insert new structs in the <code>Vec</code> and delete removed structs.</li>
 </ul>
 <p>Consider this field list:</p>
-<pre><code>let f = fields!(User, &quot;*, books, books_*&quot;)
+<pre><code class="language-rust ignore">let f = fields!(User, &quot;*, books, books_*&quot;);
 </code></pre>
 <ul>
 <li>With <code>*</code> we consider all simple fields from User for updating (this excludes merges),</li>
@@ -621,7 +822,12 @@ it inserts new book (toghether with possible <a href="3-api/../4-derive/8-partia
 <li><code>books_*</code> will update all simple fields in the existing <code>books</code>.</li>
 </ul>
 <a class="header" href="#example-updating-a-vec-with-new-items" id="example-updating-a-vec-with-new-items"><h3>Example: Updating a Vec with new items.</h3></a>
-<pre><code>    #[derive(Debug, PartialEq, Toql)]
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+    use toql::prelude::{Cache, Toql, ToqlApi, fields};
+    use toql::mock_db::MockDb;
+
+    #[derive(Debug, PartialEq, Toql)]
     struct Book {
         #[toql(key)]
         id: u64,
@@ -631,7 +837,7 @@ it inserts new book (toghether with possible <a href="3-api/../4-derive/8-partia
     }
 
     #[derive(Debug, PartialEq, Toql)]
-     #[toql(auto_key = true)]
+     #[toql(auto_key)]
     struct User {
         #[toql(key)]
         id: u64,
@@ -639,10 +845,13 @@ it inserts new book (toghether with possible <a href="3-api/../4-derive/8-partia
         #[toql(merge())]
         books : Option&lt;Vec&lt;Book&gt;&gt;
     }
+    
+    let cache = Cache::new();
+    let mut toql = MockDb::from(&amp;cache);
 
-    let u = User {
+    let mut user = User {
         id: 27,
-        title: Some(&quot;Joe Pencil&quot;),
+        name: Some(&quot;Joe&quot;.to_string()),
         books: Some(vec![
             Book{
                 id: 100,
@@ -655,11 +864,20 @@ it inserts new book (toghether with possible <a href="3-api/../4-derive/8-partia
                 title: Some(&quot;Batman&quot;.to_string())
             }
         ])
-    }
+    };
 
-    toql.update_one(&amp;mut u, fields!(&quot;*, books, books_*&quot;)).await?;
-    
-</code></pre>
+    toql.update_one(&amp;mut user, fields!(User, &quot;*, books, books_*&quot;)).await.unwrap();
+    assert_eq!(toql.take_unsafe_sqls(), 
+   [&quot;UPDATE Book SET title = 'Batman' WHERE id = 200 AND user_id = 27&quot;, 
+    &quot;UPDATE User SET name = 'Joe' WHERE id = 27&quot;,
+    &quot;DELETE user_books FROM Book user_books \
+        JOIN User user ON user.id = user_books.user_id \
+        WHERE user.id = 27 AND NOT (user_books.id = 200 AND user_books.user_id = 27)&quot;, 
+    &quot;INSERT INTO Book (id, user_id, title) VALUES (100, 27, 'King Kong')&quot;]
+    );
+
+#   }    
+</code></pre></pre>
 <p>To mark new books, add them with an invalid key. A value of <code>0</code> or an empty string <code>''</code> is considered invalid.
 Normally databases start counting indexes from 1 and some databases consider an empty string like null, which is
 also forbidden as primary key. So this idea of invalid key should normally work, however check with you database.</p>
@@ -669,17 +887,35 @@ Toql will notice that and insert a new book (with the correct <code>user_id</cod
 <a class="header" href="#deletes" id="deletes"><h2>Deletes</h2></a>
 <p>There are two delete functions: <code>delete_one</code>, and <code>delete_many</code>.</p>
 <p>Both functions take a predicate and delete all rows that match that predicate.</p>
-<p><code>delete_one</code> takes a key or entity. It will build a filter predicate from that and delete the row that coresponds to the key.</p>
-<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, where as field selects and selections in the query are ignored. See the <a href="3-api/5-query-lanuage/1-introduction.html">query language</a> for details.</p>
-<pre><code>use toql::prelude::ToqlApi;
+<p><code>delete_one</code> takes a key. It will build a filter predicate from that and delete the row that coresponds to the key.</p>
+<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the <a href="3-api/5-query-lanuage/1-introduction.html">query language</a> for details.</p>
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+use toql::prelude::{ToqlApi, Cache, Toql, query, Keyed};
+use toql::mock_db::MockDb;
 
-toql.delete_one(UserKey::from(5))?;
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+}
 
-let u = User {id: 5};
-toql.delete_one(u).await?;
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-toql.delete_many(query!(User, &quot;id eq 5&quot;)).await?;
-</code></pre>
+toql.delete_one(UserKey::from(5)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;DELETE user FROM User user WHERE user.id = 5&quot;);
+
+let u = User {id: 5, name: &quot;John&quot;.to_string()};
+toql.delete_one(u.key()).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;DELETE user FROM User user WHERE user.id = 5&quot;);
+
+toql.delete_many(query!(User, &quot;id eq 5&quot;)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;DELETE user FROM User user WHERE user.id = 5&quot;);
+# }
+</code></pre></pre>
 <a class="header" href="#cascading" id="cascading"><h3>Cascading</h3></a>
 <p><code>delete</code> does not do any cascading by itself. It just deletes rows from a <em>single</em> table.
 To cascade your deletes you must configure your database relations
@@ -699,36 +935,26 @@ and tell the database what to do with your joined rows: Delete them too or just 
 <a class="header" href="#passing-the-database" id="passing-the-database"><h3>Passing the database</h3></a>
 <p>If you decide to pass the database you give up on database independence, but less trait bounds are needed:</p>
 <p>For MySQL this looks like this:</p>
-<p>``rust
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
 use toql::prelude::ToqlApi;
 use toql_mysql_async::prelude::{MySqlAsync, Queryable};
-fn do_stuff<C>(toql: &amp;mut MySqlAsync&lt;'_,C&gt;)
+fn do_stuff&lt;C&gt;(toql: &amp;mut MySqlAsync&lt;'_,C&gt;) 
 where C:Queryable -&gt; Resulty
 {
-let q = query!(...)
-let users = toql.load_many(&amp;q).await?;
-toql.insert_many(users, paths!(top)).await?;
-toql.update_many(users, fields!(top)).await?;
-toql.delete_many(q).await?;
-}</p>
-<pre><code>The `Queryable` trait makes the `MySqlAsync` work with a connection or a transaction.
-
-
-
-## Database independed functions
-
-It's also possible to pass a struct that implements `ToqlApi`. 
-However this requires more trait bounds to satisfy the bounds on `ToqlApi`.
-Unfortunately rust Rust compiler has a problem with [associated type bounds](https://rust-lang.github.io/rfcs/2289-associated-type-bounds.html), so it looks more complicated than it had to be.
-
-
-
-
-
-
-
-
-</code></pre>
+    let q = query!(...)
+    let users = toql.load_many(&amp;q).await?;
+    toql.insert_many(users, paths!(top)).await?;
+    toql.update_many(users, fields!(top)).await?;
+    toql.delete_many(q).await?;
+}
+#}</code></pre></pre>
+<p>The <code>Queryable</code> trait makes the <code>MySqlAsync</code> work with a connection or a transaction.</p>
+<a class="header" href="#database-independed-functions" id="database-independed-functions"><h2>Database independed functions</h2></a>
+<p>It's also possible to pass a struct that implements <code>ToqlApi</code>.
+However this requires more trait bounds to satisfy the bounds on <code>ToqlApi</code>.
+Unfortunately rust Rust compiler has a problem with <a href="https://rust-lang.github.io/rfcs/2289-associated-type-bounds.html">associated type bounds</a>, so it looks more complicated than it had to be.</p>
 <a class="header" href="#the-toql-derive" id="the-toql-derive"><h1>The Toql derive</h1></a>
 <p>A struct must derive <code>Toql</code>. Only on a derived struct any function from the <a href="4-derive/../3-api/1-introduction.html">ToqlApi</a> can be called.</p>
 <p>This derive builds <em>a lot</em> of code. This includes</p>
@@ -743,6 +969,7 @@ Unfortunately rust Rust compiler has a problem with [associated type bounds](htt
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+   use toql::prelude::Toql;
    #[derive(Toql)]
    struct User {
        #[toql(key)]
@@ -751,21 +978,31 @@ Unfortunately rust Rust compiler has a problem with [associated type bounds](htt
 }
 #}</code></pre></pre>
 <p>We can now do the following</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-use toql::mysql::load_one; // Load function from derive
-use toql::mysql::update_one; // Update function from derive
+<pre><pre class="playpen"><code class="language-rust">    use toql::prelude::{query, ToqlApi, Cache, Toql, Page, fields};
+    use toql::mock_db::MockDb;
+    use toql::row;
 
-let toql = --snip--
-let cache = 
+#    #[derive(Toql)]
+#    struct User {
+#      #[toql(key)]
+#      id: u64,
+#      age: Option&lt;u8&gt;
+#    }
 
-let q = query!(User, &quot;id eq 5&quot;); 
-let mut user = toql.load_one(&amp;q); 
+#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+    toql.mock_rows(&quot;SELECT user.id, user.age FROM User user WHERE user.id = 5&quot;, vec![row!(5u64, 27u64)]);
+  
+    let q = query!(User, &quot;id eq 5, age&quot;); 
+    let mut user = toql.load_one(&amp;q).await.unwrap(); 
 
-user.age = Some(16);
-toql.update_one(&amp;mut user); 
-#}</code></pre></pre>
+    user.age = Some(16);
+    toql.update_one(&amp;mut user, fields!(top)).await.unwrap(); 
+# }
+</code></pre></pre>
 <a class="header" href="#fields" id="fields"><h1>Fields</h1></a>
 <p>Struct fields are mapped to Toql query fields and database columns by default in a predictable way:</p>
 <ol>
@@ -784,63 +1021,96 @@ toql.update_one(&amp;mut user);
 <li>mixedCase</li>
 </ul>
 <a class="header" href="#renaming-scheme-example" id="renaming-scheme-example"><h4>Renaming scheme example</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
-#[toql(tables=&quot;SHOUTY_SNAKE_CASE&quot;, columns=&quot;UpperCase&quot;)]
+#[toql(tables=&quot;SHOUTY_SNAKE_CASE&quot;, columns=&quot;CamelCase&quot;)]
 struct User {
     #[toql(key)]
-    user_id: u32
+    user_id: u32,
     full_name: String,
 }
-#}</code></pre></pre>
-<p>is translated into</p>
-<p><code>SELECT t0.UserId, t0.FullName FROM USER_REF t0</code></p>
+
+let cache = Cache::default();
+let mut toql = MockDb::from(&amp;cache);
+let q = query!(User, &quot;*&quot;); 
+let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), &quot;SELECT user.UserId, user.FullName FROM USER user&quot;);
+# }
+</code></pre></pre>
 <a class="header" href="#explicit-naming-example" id="explicit-naming-example"><h4>Explicit naming example</h4></a>
-<p>Use <code>table</code> an the struct and <code>column</code> on the fields to set a name.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<p>Use <code>table</code> on the struct and <code>column</code> on fields to set a explicit name.</p>
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+ 
 #[derive(Toql)]
 #[toql(table=&quot;User&quot;)]
 struct UserRef {
 
     #[toql(key, column=&quot;id&quot;)]
     user_id: u32,
-
     full_name: String,
-}
-#}</code></pre></pre>
-<p>is translated into</p>
-<p><code>SELECT t0.id, t0.full_name FROM User t0</code></p>
-<p>Use <code>column</code> also when mapping a field, that is a SQL keyword. Notice the back ticks:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[toql(column=&quot;`order`&quot;)]
-    order: u32,
-#}</code></pre></pre>
+} 
+ 
+let cache = Cache::default();
+let mut toql = MockDb::from(&amp;cache);
+
+let q = query!(UserRef, &quot;*&quot;); 
+let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), &quot;SELECT user.id, user.full_name FROM User user&quot;); 
+
+# }
+</code></pre></pre>
+<p>Use <code>column</code> also when mapping a field that is a SQL keyword. Notice the back ticks:</p>
+<pre><code class="language-rust ignore">    #[toql(column=&quot;`order`&quot;)]
+    order: u32
+</code></pre>
 <a class="header" href="#toql-query-fields" id="toql-query-fields"><h3>Toql query fields</h3></a>
 <p>Toql query fields on a struct are always mixed case, while dependencies are separated with an underscore.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
 #[toql(table=&quot;User&quot;)]
 struct UserRef {
 
     #[toql(key, column=&quot;id&quot;)]
-    id: u32
+    id: u32,
 
     full_name: String,
 
-    #[toql(join())]
-    county: Country
+    #[toql(join)]
+    country: Country
 }
-#}</code></pre></pre>
-<p>is referred to as</p>
-<p><code>id, fullName, country_id</code></p>
+#[derive(Toql)]
+struct Country {
+
+    #[toql(key)]
+    id: u32,
+    name: String,
+}
+
+
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+  
+    let q = query!(UserRef, &quot;id, fullName, country_id&quot;); 
+    let mut users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, user.full_name, user_country.id, user_country.name \
+                FROM User user \
+                JOIN (Country user_country) \
+                ON (user.country_id = user_country.id)&quot;);
+
+# }
+</code></pre></pre>
 <a class="header" href="#exclusion" id="exclusion"><h2>Exclusion</h2></a>
 <p>Fields can be excluded in several ways</p>
 <ul>
@@ -848,15 +1118,17 @@ struct UserRef {
 <li><code>skip_mut</code> ensures a field is never updated, automatically added for keys and SQL expressions.</li>
 <li><code>skip_wildcard</code> removes a field from default <a href="4-derive/../5-query-language/2-select.html">wildcard selection</a>, use for expensive SQL expressions or soft hiding.</li>
 </ul>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
+
 #[derive(Toql)]
 #[toql(table=&quot;User&quot;)]
 struct UserRef {
     
     #[toql(key, column=&quot;id&quot;)]
-    id: u32
+    id: u32,
 
     full_name: String,
 
@@ -866,16 +1138,23 @@ struct UserRef {
     #[toql(skip)]
     value: String,
 
-    #[toql(join(), skip_mut)]
-    country: Country
 }
-#}</code></pre></pre>
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+
+    let q = query!(UserRef, &quot;*&quot;); 
+    let mut users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), &quot;SELECT user.id, user.full_name FROM User user&quot;);
+
+#  }
+</code></pre></pre>
 <a class="header" href="#optional-fields" id="optional-fields"><h1>Optional fields</h1></a>
 <p>A <a href="4-derive/../5-query-language/1-introduction.html">Toql query</a> can select individual fields from a struct. However fields must be <code>Option</code> for this, otherwise they will always be selected in the SQL statement, regardless of the query.</p>
 <a class="header" href="#example-1" id="example-1"><h3>Example:</h3></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
   #[derive(Toql)]
     struct User {
 
@@ -884,13 +1163,23 @@ struct UserRef {
 
         age: u8,			// Always selected in SQL
 
-        firstname: Option&lt;String&gt;	// Selectable field of non nullable column
-        middlename: Option&lt;Option&lt;String&gt;&gt;// Selectable field of nullable column
+        firstname: Option&lt;String&gt;,	// Selectable field of non nullable column
+        middlename: Option&lt;Option&lt;String&gt;&gt;,// Selectable field of nullable column
 
         #[toql(preselect)]	
         lastname: Option&lt;String&gt;	// Always selected in SQL, nullable column
   }
-#}</code></pre></pre>
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+  
+    // Load preselected fields
+    let q = query!(User, &quot;id&quot;); 
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, user.age, user.lastname FROM User user&quot;);
+
+#  }
+</code></pre></pre>
 <p>You noticed it: Nullable columns that should always be selected must be annotated with <code>preselect</code>.</p>
 <a class="header" href="#preselection-and-joins" id="preselection-and-joins"><h2>Preselection and joins</h2></a>
 <p>Preselected fields on <em>joined</em> structs are selected, if</p>
@@ -899,9 +1188,10 @@ struct UserRef {
 <li>or at least one field on that join is selected</li>
 </ul>
 <a class="header" href="#preselection-example" id="preselection-example"><h4>Preselection example</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi, query, Cache};
+use toql::mock_db::MockDb;
   #[derive(Toql)]
     struct User {
 
@@ -922,7 +1212,20 @@ struct UserRef {
 
             code: Option&lt;String&gt;
     }
-#}</code></pre></pre>
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+  
+    // Load preselected fields
+    let q = query!(User, &quot;id&quot;); 
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, user_nativeLanguage.id \
+            FROM User user \
+            JOIN (Language user_nativeLanguage) \
+            ON (user.native_language_id = user_nativeLanguage.id)&quot;);
+
+#  }
+</code></pre></pre>
 <p>Above <code>id</code> in <code>User</code> is always selected, because it's <em>not</em> <code>Option</code>.
 As <code>native_language</code> is a preselected (inner) join, its <code>id</code> will also always be selected.
 But on the contrary <code>foreign_language</code> is a selectable (left) join. <code>id</code> will only be selected if the query requests any other field from that join. For example with <code>foreignLanguage_code</code>.</p>
@@ -943,39 +1246,65 @@ But on the contrary <code>foreign_language</code> is a selectable (left) join. <
 <p>Toql is an SQL friendly ORM. Instead of mapping a struct field to a column you can also map it
 to a raw SQL expression. There are small syntax enhancements to work with aliases and auxiliary parameters.</p>
 <a class="header" href="#alias-axample" id="alias-axample"><h4>Alias axample</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[derive(Toql)]
-struct User {
-    #[toql(key)]
-    id: u64,
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    use toql::prelude::{Toql, ToqlApi, query, Cache};
+    use toql::mock_db::MockDb;
 
-    #[toql(sql=&quot;(SELECT COUNT(*) FROM Books b WHERE b.author_id = ..id)&quot;)]
-    number_of_book:u64
-}
-#}</code></pre></pre>
-<p>Notice the <code>..</code> ! This special alias will be replaced with the alias created for <em>User</em>.
-The generated SELECT might look like this:</p>
-<pre><code>SELECT t0.id, (SELECT COUNT(*) FROM Books WHERE author_id = t0.id) FROM User t0
-</code></pre>
+    #[derive(Toql)]
+    struct User {
+        #[toql(key)]
+        id: u64,
+
+        #[toql(sql=&quot;(SELECT COUNT(*) FROM Books b WHERE b.author_id = ..id)&quot;)]
+        number_of_book:u64
+    }
+
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+
+    let q = query!(User, &quot;id&quot;); 
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, (SELECT COUNT(*) FROM Books b WHERE b.author_id = user.id) \
+            FROM User user&quot;);
+#   }
+</code></pre></pre>
+<p>Notice the <code>..</code> ! This special alias will be replaced with the alias created for <em>User</em>.</p>
 <p>To use aux params in a SQL query use the <code>&lt;param_name&gt;</code> syntax.</p>
 <a class="header" href="#aux-params-example" id="aux-params-example"><h4>Aux params example</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[derive(Toql)]
-struct User {
-    #[toql(key)]
-    id: u64,
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    use toql::prelude::{Toql, ToqlApi, query, Cache, ContextBuilder};
+    use toql::mock_db::MockDb;
+    use std::collections::HashMap;
 
-    #[toql(sql=&quot;(SELECT &lt;page_limit&gt;)&quot;)]
-    page_limit:u64
+    #[derive(Toql)]
+    struct User {
+        #[toql(key)]
+        id: u64,
 
-     #[toql(sql=&quot;(SELECT COUNT(*) FROM Films f WHERE f.age &gt;= &lt;age&gt;)&quot;)]
-    age_rated_films:u64
-}
-#}</code></pre></pre>
+        #[toql(sql=&quot;(SELECT &lt;page_limit&gt;)&quot;)]
+        page_limit:u64,
+
+        #[toql(sql=&quot;(SELECT COUNT(*) FROM Films f WHERE f.age &gt;= &lt;age&gt;)&quot;)]
+        age_rated_films:u64
+    }
+ 
+    let mut p = HashMap::new();
+    p.insert(&quot;page_limit&quot;.into(), 200.into());
+    p.insert(&quot;age&quot;.into(), 57.into());
+
+    let context = ContextBuilder::new().with_aux_params(p).build();
+    let cache = Cache::new();
+    let mut toql = MockDb::with_context(&amp;cache, context);
+
+    let q = query!(User, &quot;id&quot;); 
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, (SELECT 200), (SELECT COUNT(*) FROM Films f WHERE f.age &gt;= 57) FROM User user&quot;);
+#   }
+</code></pre></pre>
 <p>In the example <em>page_limit</em> might come from a server configuration.
 It would typically be put in the <a href="4-derive/../3-api/1-introduction.html">context</a> and can be used in SQL expressions.</p>
 <p>The aux param <em>age</em> might be taken from the authorisation token and put as an aux param into the context or query.
@@ -995,70 +1324,83 @@ Here it restricts the number of films.</p>
 </ul>
 <a class="header" href="#filter-on-fields" id="filter-on-fields"><h2>Filter on fields</h2></a>
 <p>Let's support a length function <code>LLE</code> , so that we can filter on maximum  word length</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+   use toql::prelude::{ToqlApi, DefaultFieldHandler, FieldHandler, 
+               SqlExpr, SqlBuilderError, FieldFilter, Cache, Toql,
+               ParameterMap, sql_expr, query};
+   use toql::mock_db::MockDb;
 
-#fn main() {
-use toql::prelude::{BasicFieldFilter, FieldHandler, SqlExpr, SqlBuilderError, FieldFilter};
+   struct LengthFieldHandler{
+       // The default field handler gives us default filters 
+       // such as `EQ`, `NE`, ...
+       default_handler: DefaultFieldHandler, 
+   };
 
-struct LengthFieldHandler{
-    // The default field handler gives us default filters, such as `eq`, `ne`, ...
-    default_handler: BasicFieldHandler, 
-};
-
-impl FieldHandler for PermissionFieldHandler
-{
-    fn build_filter(
-       &amp;self,
-       select: SqlExpr,        // Our column or SQL expression
-       filter: &amp;FieldFilter,   // The filter called with this field
-       aux_params: &amp;ParameterMap, // All aux params available
-   ) -&gt; Result&lt;Option&lt;SqlExpr&gt;, SqlBuilderError&gt; {
-       match filter {
-           // Support our custom LL filter that maps to the MySQL FIND_IN_FIELD function
-           FieldFilter::Fn(name, args) =&gt; match name.as_str() {
-               &quot;LLE&quot; =&gt; {
-                    if args.len() != 1 {
-                       return Err(SqlBuilderError::FilterInvalid( &quot;filter `FN LLE` expects exactly 1 argument&quot;.to_string()));
+   impl FieldHandler for LengthFieldHandler
+   {
+       fn build_filter(
+           &amp;self,
+           select: SqlExpr,            // Column or SQL expression
+           filter: &amp;FieldFilter,       // The filter called with this field
+           aux_params: &amp;ParameterMap,  // All aux params available
+       ) -&gt; Result&lt;Option&lt;SqlExpr&gt;, SqlBuilderError&gt; {
+           match filter {
+               // Support our custom LLE filter that maps 
+               // to the MySQL LENGTH function
+               FieldFilter::Fn(name, args) =&gt; match name.as_str() {
+                   &quot;LLE&quot; =&gt; {
+                       if args.len() != 1 {
+                           return Err(SqlBuilderError::FilterInvalid( 
+                               &quot;filter `FN LLE` expects exactly 1 argument&quot;.to_string()));
+                       }
+                       Ok(Some(sql_expr!(&quot;LENGTH ({}) &lt;= ?&quot;, select, &amp;args[0])))
                    }
-                   Ok(Some(sql_expr!(&quot;LENGTH ({}) &lt;= ?&quot;, select, args[0])))
-               }
-               name @ _ =&gt; Err(SqlBuilderError::FilterInvalid(name.to_string())),
-           },
-           _ =&gt; self.default_handler.build_filter(select, filter, aux_params),
+                   name @ _ =&gt; Err(SqlBuilderError::FilterInvalid(name.to_string())),
+               },
+               _ =&gt; self.default_handler.build_filter(select, filter, aux_params),
+           }
+       }
+
+   }
+
+   // Getter method for mapper
+   pub fn length_field_handler() -&gt; impl FieldHandler {
+       LengthFieldHandler{
+           default_handler: DefaultFieldHandler::new(), 
        }
    }
 
-}
+   #[derive(Toql)]
+   struct User {
+       #[toql(key)]
+       id: u64,
 
-// Getter method for mapper
-pub fn length_field_handler() -&gt; impl FieldHandler {
-   LengthFieldHandler:{
-        default_handler: BasicFieldHandler::new(), 
+       #[toql(handler=&quot;length_field_handler&quot;)]
+       name: Option&lt;String&gt;,
    }
-}
-#}</code></pre></pre>
-<p>Now we can map our filter with</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[toql(handler=&quot;length_field_handler&quot;)]
-name: String
-#}</code></pre></pre>
-<p>and use it in a query with</p>
-<pre><code class="language-toql">*, name FN LLE 5
-</code></pre>
+
+   let cache = Cache::new();
+   let mut toql = MockDb::from(&amp;cache);
+
+   let q = query!(User, &quot;name FN LLE 5&quot;); 
+   let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+   assert_eq!(toql.take_unsafe_sql(), 
+           &quot;SELECT user.id, user.name \
+           FROM User user \
+           WHERE LENGTH (user.name) &lt;= 5&quot;);
+#   }
+</code></pre></pre>
 <p>For a bigger example, check out our <a href="4-derive/6-appendix/4-row-access-control.html">permission handler</a>.</p>
 <a class="header" href="#field-handlers-with-local-aux-params" id="field-handlers-with-local-aux-params"><h3>Field handlers with local aux params</h3></a>
 <p>If you want to use the same field handler in different places
 it mightly come handy to give the field handler some local context.</p>
 <p>This can be achieved with local aux_params:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-    #[toql(sql=&quot;&quot;, field_handler=&quot;smart_name_handler&quot;, aux_param(name=&quot;strategy&quot;, value=&quot;quick&quot;))]
+<pre><code class="language-rust ignore">    #[toql(sql=&quot;&quot;, 
+        field_handler=&quot;smart_name_handler&quot;, 
+        aux_param(name=&quot;strategy&quot;, value=&quot;quick&quot;))]
     smart_name: String
-#}</code></pre></pre>
+</code></pre>
 <p>The aux param <code>strategy</code> is only available in the <code>smart_name_handler</code>. Only strings values are supported.</p>
 <a class="header" href="#joins-1" id="joins-1"><h1>Joins</h1></a>
 <p>A struct can refer to another struct. This is done with a SQL join.</p>
@@ -1071,25 +1413,27 @@ it mightly come handy to give the field handler some local context.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 struct User {
 
     #[toql(key)]
      id: u32,	
 
-     name: Option&lt;String&gt;
+     name: Option&lt;String&gt;,
 
      #[toql(join())]  
-     phone1 : Phone // Always selected inner join
+     phone1 : Phone, 		// Always selected inner join
 
      #[toql(join())]  
-     phone2 : Option&lt;Phone&gt; // Selectable inner join
+     phone2 : Option&lt;Phone&gt;, // Selectable inner join
 
      #[toql(join())]  
-     phone3 : Option&lt;Option&lt;Phone&gt;&gt; // Selectable left join
+     phone3 : Option&lt;Option&lt;Phone&gt;&gt;, // Selectable left join
 
      #[toql(join(), preselect)]  
-     phone4 : Option&lt;Phone&gt; // Always selected left join
+     phone4 : Option&lt;Phone&gt;, // Always selected left join
 }
 #}</code></pre></pre>
 <p>Notice how <code>Option</code> makes the difference between an inner join and a left join.</p>
@@ -1097,51 +1441,62 @@ struct User {
 <p>By default foreign keys are calulated by the primary columns of the join and the field name of the join.
 For the above it would be <em>phone1_id</em>, <em>phone2_id</em>, <em>phone3_id</em> and <em>phone4_id</em>.</p>
 <p>If your naming scheme differs from that default behaviour, use the <code>columns</code> attribute:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[toql(join(columns(self=&quot;mobile1_id&quot;, other=&quot;id&quot;)))]  
+<pre><code class="language-rust ignore">#[toql(join(columns(self=&quot;mobile1_id&quot;, other=&quot;id&quot;)))]  
 phone1 : Phone 
-#}</code></pre></pre>
+</code></pre>
 <p>For a composite key use <code>columns</code> multiple times.</p>
 <a class="header" href="#custom-on-predicate" id="custom-on-predicate"><h2>Custom ON predicate</h2></a>
 <p>It's possible to restrict the join with a <code>ON</code> SQL predicate.</p>
 <p>Here an example of a translated country name.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[derive(Toql)]
-struct User {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    use toql::prelude::{Toql};
+    use toql::mock_db::MockDb;
 
-    #[toql(key)]
-     id: u32,	
+    #[derive(Toql)]
+    struct User {
 
-     country: Option&lt;Country&gt;
-}
+        #[toql(key)]
+        id: u32,	
 
-#[derive(Toql)]
-#[toql(auto_key = false))]
-struct Country {
+        country: Option&lt;Country&gt;
+    }
 
-    #[toql(key)]
-     id: u32,	
+    #[derive(Toql)]
+    struct Country {
 
-    #[toql(join(columns(self = &quot;id&quot;, other = &quot;id&quot;), 
-            on_sql = &quot;...language_id=&lt;interface_language_id&gt;&quot;
-        ),
-    )]
-    pub translation: Option&lt;CountryTranslation&gt;
-}
-#[derive(Toql)]
-#[toql(auto_key = false))]
-pub struct CountryTranslation {
+        #[toql(key)]
+        id: u32,	
 
-    #[toql(key)]
-    pub id: String,
-    
-    pub title: String,
-}
-#}</code></pre></pre>
+        #[toql(join(columns(self = &quot;id&quot;, other = &quot;id&quot;), 
+                on_sql = &quot;...language_id=&lt;interface_language_id&gt;&quot;
+            ),
+        )]
+        pub translation: Option&lt;CountryTranslation&gt;
+    }
+
+    #[derive(Toql)]
+    pub struct CountryTranslation {
+
+        #[toql(key)]
+        pub id: String,
+        
+        pub title: String,
+    }
+
+    let cache = Cache::new();
+    let mut toql = MockDb::from(&amp;cache);
+
+    let q = query!(User, &quot;country_translation_title&quot;);
+
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, user.name \
+            FROM User user \
+            WHERE LENGTH (user.name) &lt;= 5&quot;);
+#   }
+
+</code></pre></pre>
 <p>You can use any raw SQL in the <code>ON</code> predicate. Did you spot the <code>...</code> alias?
 This will resolve to the alias of the joined struct (CountryTranslation).</p>
 <p>Apart from <code>ON</code> predicates the <code>...</code> alias can also be used in custom merge predicates.</p>
@@ -1151,13 +1506,9 @@ Aux params usually come from a context, query.</p>
 <p>However for <code>ON</code> there is a third source : Aux params may also come from <a href="4-derive/10-predicates.html">query predicates</a>.</p>
 <p>This allows some nifty joining, see here:</p>
 <a class="header" href="#example-with-on_aux_param" id="example-with-on_aux_param"><h3>Example with on_aux_param</h3></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-
-#fn main() {
+<pre><code class="language-rust ignore">
 #[derive(Toql)]
-#[toql(auto_key = false, 
-        predicate(
+#[toql( predicate(
             name =&quot;language&quot;, 
             sql=&quot;EXISTS(SELECT 1 FROM Country c \
                 JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)&quot;, 
@@ -1184,7 +1535,7 @@ pub struct Language {
     
     pub title: String,
 }
-#}</code></pre></pre>
+</code></pre>
 <p>Above we add a predicate that allows to filter all countries by a language.
 There can be multiple countries that speak the same language.</p>
 <p>The predicate takes the one argument (<code>?</code>) and adds it to the aux_params for custom joins (<code>on_param</code>).</p>
@@ -1292,14 +1643,14 @@ This is done because</p>
 
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct Question {
     #[toql(key)]
     id: u64
 
     text: String,
 
-    #[toql(join(columns(self=&quot;id&quot;, other=&quot;question_id&quot;)), partial_table)]
+    #[toql(join(columns(self=&quot;id&quot;, other=&quot;question_id&quot;), partial_table))]
     details: Option&lt;QuestionDetails&gt;
 }
 
@@ -1324,7 +1675,7 @@ This would be correct for regular joins, but fails on partial tables.</p>
 # #![allow(unused_variables)]
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct User {
 
     #[toql(key)]
@@ -1362,7 +1713,7 @@ from the composite key. In those situations it's often desirable to skip it.</p>
 # #![allow(unused_variables)]
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct User {
 
     #[toql(key)]
@@ -1431,7 +1782,7 @@ But since it's not, we have to mark it with <code>#[foreign_key]</code>. This te
 # #![allow(unused_variables)]
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct User {
     #[toql(key)]
     id: u64,
@@ -1442,7 +1793,7 @@ struct User {
 
 
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct Todo {
     #[toql(key)]
     id: u64,
@@ -1672,17 +2023,17 @@ and retrieve all users from a certain street with <code>@street 'elmstreet'</cod
 If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="4-derive/7-joins.html">on aux param</a>.</p>
 <a class="header" href="#reference" id="reference"><h2>Reference</h2></a>
 <p>The full predicate syntax is
-<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param=&quot;..&quot;, count_filter=true|false)</code>
+<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param(name&quot;..&quot;, index = .), count_filter=true|false)</code>
 where</p>
 <ul>
 <li><strong>name</strong> is the name of the predicate. It can be called in a Toql query with <code>@name ..</code>.
 If a predicate is defined on a joined struct, that predicate can be called with a path
 <code>@path_name ..</code>. See <a href="4-derive/5-query-language/5-predictes.html">predicates in the query</a> for more details.</li>
-<li><strong>sql</strong> is a raw QL expression. Use <code>?</code> to insert a predicate param in the SQL,
+<li><strong>sql</strong> is a raw SQL expression. Use <code>?</code> to insert a predicate param in the SQL,
 <code>..</code> for the table alias and <code>&lt;aux_param&gt;</code> for an aux param value.</li>
 <li><strong>handler</strong> allows a custom predicate handler (build SQL with a function).
 Provide a function name without parenthesis that return a struct that implement <code>toql::prelude::PredicateHandler</code></li>
-<li><strong>on_aux_param</strong> sets the value of an aux_param. This aux param is only available when building custom joins
+<li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building custom joins.
 and can only be used when the predicate takes exactly one argument. See <a href="4-derive/7-join.html">example</a>.</li>
 <li><strong>count_filter</strong> determines if a predicate used in Toql query should also be used for <a href="4-derive/3-api/2-load.html">count queries</a>.
 Default is <code>false</code>.</li>
@@ -1748,7 +2099,6 @@ pub fn my_handler() -&gt; impl PredicateHandler {
 <p>It's possible to restrict access to fields and structs with boolean role expressions.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
-
 #fn main() {
 #[derive(Toql)] {
 #[toql(roles(insert=&quot;poweruser&quot;, delete=&quot;poweruser&quot;))
@@ -1779,6 +2129,97 @@ let context = ContextBuilder::new()
 <p>See <a href="4-derive/3-api/1-introduction.html">here</a> for how to get a backend.</p>
 <p>Notice that roles can restrict access to columns but not to rows.
 For row access control, check out the <a href="4-derive/../6-appendix/4-row-access-control.html">chapter</a> in the appendix.</p>
+<a class="header" href="#load" id="load"><h2>Load</h2></a>
+<p>It's possible to restrict loading, filtering and ordering of a struct or individual fields, joins and merges.</p>
+<p>Let's assume a <code>struct Book</code>:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)]
+#[toql(roles(load =&quot;book_role&quot;))]
+struct Book {
+    #[toql(key)]
+    id : u64
+
+    #[toql(roles(load=&quot;author_role&quot;))]
+    title Option&lt;String&gt;&gt;,
+
+    #[toql(roles(load=&quot;author_role&quot;))]
+    author: Option&lt;Join&lt;User&gt;&gt;,
+
+    #[toql(roles(load=&quot;edition_role&quot;))]
+    editions: Option&lt;Vec&lt;Edition&gt;&gt;,
+}
+#}</code></pre></pre>
+<p>To load anything from the book, the user requires the <code>book_role</code>.
+So to load the book's title the user requires the roles <code>book_role</code> and <code>author_role</code>.</p>
+<a class="header" href="#preselected-fields" id="preselected-fields"><h2>Preselected fields</h2></a>
+<p>Notice that restricting preselected fields is like restricting the entire struct. See here:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)]
+#[toql(roles(load =&quot;book_role&quot;))]
+struct Book {
+    #[toql(key)]
+    id : u64
+
+    #[toql(roles(load=&quot;author_role&quot;))]
+    title String
+}
+#}</code></pre></pre>
+<p>Here Toql needs to load the title field in order to deserialize the struct. Because <code>title</code> is role restricted an error is raised for a missing <code>autor_role</code>.</p>
+<a class="header" href="#wildcard-behaviour" id="wildcard-behaviour"><h2>Wildcard behaviour</h2></a>
+<p>If all fields from <code>Book</code> are selected with a wildcard <code>*</code> fields that do not match the role restriction are simply skipped. However, if such a field is selected explictly in the query then an error is raised.</p>
+<a class="header" href="#update-1" id="update-1"><h2>Update</h2></a>
+<p>To restrict updating a struct or individual fields:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)] {
+#[toql(roles(update=&quot;book_role&quot;))
+struct Book
+
+    #[toql(key)]
+    id : u64
+
+    #[toql(roles(update=&quot;author_role&quot;))]
+    title Option&lt;String&gt;&gt;,
+
+    #[toql(roles(update=&quot;author_role&quot;))]
+    author: Option&lt;Join&lt;User&gt;&gt;,
+
+    #[toql(roles(update=&quot;edition_role&quot;))]
+    editions: Option&lt;Vec&lt;Edition&gt;&gt;,
+}
+#}</code></pre></pre>
+<p>To update anything on the book, the user requires the <code>book_role</code>.
+So to update the book's title the user requires the roles <code>book_role</code> and <code>author_role</code>.</p>
+<p>The role restriction on the <code>author</code> join applies only to the foreign key <code>author_id</code> in table <code>Book</code>, not to the joined <code>User</code>.
+To restrict the joined <code>User</code> put a role restriction <code>#[toql(roles(update=&quot;user_role&quot;))</code> on top of the struct <code>User</code></p>
+<p>Update restrictions on partials joins are not allowed, since partial joins have no foreign key:
+Partial joins share the same primary key.</p>
+<p>Likewise the role restriction on the <code>editions</code> merge applies only to resizing the <code>Vec</code> not to the fields on the edition table.
+See the chapter on <a href="4-derive/../3-api/5-update.html">updating</a> for details.</p>
+<a class="header" href="#wildcard-behaviour-1" id="wildcard-behaviour-1"><h2>Wildcard behaviour</h2></a>
+<p>Fields that have an invalid role expression are skipped for the field list <code>*</code>. However if the field name is explicitly mentioned in the field list, then an error occurs. This behaviour is similar to loading.</p>
+<a class="header" href="#insert--delete" id="insert--delete"><h2>Insert / Delete</h2></a>
+<p>To restrict insertion or deltetion of a struct, attribute the struct like so:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Toql)] {
+#[toql(roles(insert=&quot;book_role&quot;, delete=&quot;book_role&quot;))
+struct Book
+
+    #[toql(key)]
+    id : u64
+
+    title Option&lt;String&gt;&gt;,
+    author: Option&lt;Join&lt;User&gt;&gt;,
+    editions: Option&lt;Vec&lt;Edition&gt;&gt;,
+}
+#}</code></pre></pre>
 <a class="header" href="#toql-derive-reference" id="toql-derive-reference"><h1>Toql derive reference</h1></a>
 <p>The derive provides struct level attributes and field level attributes. Here a list of all available attributes:</p>
 <a class="header" href="#attributes-for-structs" id="attributes-for-structs"><h2>Attributes for structs</h2></a>
@@ -1790,7 +2231,7 @@ For row access control, check out the <a href="4-derive/../6-appendix/4-row-acce
 <tr><td>predicate </td><td>  Define a predicate </td><td> <code>predicate(name=&quot;test&quot;, sql=&quot;MATCH(..name, ..address) AGAINST (?)&quot;)</code></td></tr>
 <tr><td>selection </td><td>  Define a selection </td><td> <code>selection(name=&quot;test&quot;, fields=&quot;*, address_street&quot;)</code></td></tr>
 <tr><td>alias </td><td>Ignore calculated alias and use this alias instead</td><td> <code>alias=&quot;tb1&quot;</code></td></tr>
-<tr><td>auto_key </td><td> Key is generated in database </td><td> <code>auto_key=true</code> Updates struct keys after inserts.</td></tr>
+<tr><td>auto_key </td><td> Key is generated in database </td><td> <code>auto_key</code> Updates struct keys after inserts.</td></tr>
 <tr><td>roles  </td><td>  role restriction for load, update, insert, delete </td><td> <code>roles(update=&quot;admin;teacher&quot;, insert=&quot;admin&quot;)</code></td></tr>
 </tbody></table>
 <a class="header" href="#attributes-for-fields" id="attributes-for-fields"><h2>Attributes for fields</h2></a>
@@ -2022,7 +2463,7 @@ use toql::prelude::{FieldHandler, DefaultFieldHandler,
     SqlExpr, ParameterMap, SqlBuilderError, SqlArg, sql_expr};
 
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct Todo {
     #[toql(key)]
     id: u64,
@@ -2135,7 +2576,7 @@ Let's look how to attribute them with serde for smooth interaction.</p>
 # #![allow(unused_variables)]
 #fn main() {
     #[derive(Toql)]
-    #[toql(auto_key = true)]
+    #[toql(auto_key)]
     struct User {
     
         // 'default' allows missing field 'id' in Json
@@ -2189,12 +2630,6 @@ where
 <p>Toql update will now work as expected.</p>
 <a class="header" href="#debugging-toql" id="debugging-toql"><h1>Debugging Toql</h1></a>
 <p>Toql generates a lot of code. Mostly from the <code>Toql</code> derive, but also from various macros, such as <code>query!</code>.</p>
-<p>Th elibrary does not have any serious software tests and the test matrix is huge. So it may happen</p>
-<ul>
-<li>that you hit a bug.</li>
-<li>the generated code doesn't compile.</li>
-</ul>
-<p>Or you just want to develop a new feature!</p>
 <p>To debug Toql generated code, follow these steps:</p>
 <ol>
 <li>If you have a lot of modules move the affected <code>mod</code> at the end of the mod list. (So generated code will appear in the terminal last).</li>
@@ -2207,7 +2642,7 @@ where
 #}</code></pre></pre>
 <ol start="3">
 <li>Copy all the logged code from the derived struct and paste it into the source file.</li>
-<li>Remove the log headers by regex replacing <code>\[2.*</code> with empty string. There should be 9 occurences.</li>
+<li>Remove the log headers by regex replacing <code>\[2.*</code> with an empty string. There should be 13 occurences.</li>
 <li>Copy your derived struct.</li>
 <li>Comment out your derived struct.</li>
 <li>On the copied struct remove all references to Toql.</li>

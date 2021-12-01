@@ -4,15 +4,36 @@ There are two insert functions: `insert_one`, and `insert_many`.
 
 The are used like so:
 
-```
-use toql::prelude::{ToqlApi, paths};
+```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main(){
+use toql::prelude::{Cache, Toql, ToqlApi, paths};
+use toql::mock_db::MockDb;
 
-let u = User {id:0, title: "hello".to_string(), adress: None};
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+    address: Option<String>
+}
 
-toql.insert_one(&mut u, paths!(top)).await?;
-toql.insert_one(&mut u, paths!(User, "")).await?;
+let cache = Cache::new();
+let mut toql = MockDb::from(&cache);
 
-toql.insert_many(&[&mut u], paths!(top)).await?;
+let mut u = User { 
+                id:0, 
+                name: "Joe".to_string(), 
+                address: None
+            };
+toql.insert_one(&mut u, paths!(top)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), "INSERT INTO User (name, address) VALUES ('Joe', DEFAULT)");
+assert_eq!(u.id, 100);
+
+toql.insert_one(&mut u, paths!(User, "")).await.unwrap();
+toql.insert_many::<User,_>(&mut [&mut u], paths!(top)).await.unwrap();
+#   }
 ```
 
 In the example above the first `insert_one` will insert `u` into the database, 

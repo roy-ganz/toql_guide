@@ -12,7 +12,7 @@ If you decide to pass the database you give up on database independence, but les
 
 For MySQL this looks like this:
 
-``rust
+```rust
 use toql::prelude::ToqlApi;
 use toql_mysql_async::prelude::{MySqlAsync, Queryable};
 fn do_stuff<C>(toql: &mut MySqlAsync<'_,C>) 

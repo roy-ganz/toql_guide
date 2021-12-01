@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>SQL expressions - Toql book</title>
+        <title>SQL expressions - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -144,39 +144,65 @@
 <p>Toql is an SQL friendly ORM. Instead of mapping a struct field to a column you can also map it
 to a raw SQL expression. There are small syntax enhancements to work with aliases and auxiliary parameters.</p>
 <a class="header" href="#alias-axample" id="alias-axample"><h4>Alias axample</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[derive(Toql)]
-struct User {
-    #[toql(key)]
-    id: u64,
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    use toql::prelude::{Toql, ToqlApi, query, Cache};
+    use toql::mock_db::MockDb;
 
-    #[toql(sql=&quot;(SELECT COUNT(*) FROM Books b WHERE b.author_id = ..id)&quot;)]
-    number_of_book:u64
-}
-#}</code></pre></pre>
-<p>Notice the <code>..</code> ! This special alias will be replaced with the alias created for <em>User</em>.
-The generated SELECT might look like this:</p>
-<pre><code>SELECT t0.id, (SELECT COUNT(*) FROM Books WHERE author_id = t0.id) FROM User t0
-</code></pre>
+    #[derive(Toql)]
+    struct User {
+        #[toql(key)]
+        id: u64,
+
+        #[toql(sql=&quot;(SELECT COUNT(*) FROM Books b WHERE b.author_id = ..id)&quot;)]
+        number_of_book:u64
+    }
+
+    let cache = Cache::default();
+    let mut toql = MockDb::from(&amp;cache);
+
+    let q = query!(User, &quot;id&quot;); 
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, (SELECT COUNT(*) FROM Books b WHERE b.author_id = user.id) \
+            FROM User user&quot;);
+#   }
+</code></pre></pre>
+<p>Notice the <code>..</code> ! This special alias will be replaced with the alias created for <em>User</em>.</p>
 <p>To use aux params in a SQL query use the <code>&lt;param_name&gt;</code> syntax.</p>
 <a class="header" href="#aux-params-example" id="aux-params-example"><h4>Aux params example</h4></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[derive(Toql)]
-struct User {
-    #[toql(key)]
-    id: u64,
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    use toql::prelude::{Toql, ToqlApi, query, Cache, ContextBuilder};
+    use toql::mock_db::MockDb;
+    use std::collections::HashMap;
 
-    #[toql(sql=&quot;(SELECT &lt;page_limit&gt;)&quot;)]
-    page_limit:u64
+    #[derive(Toql)]
+    struct User {
+        #[toql(key)]
+        id: u64,
 
-     #[toql(sql=&quot;(SELECT COUNT(*) FROM Films f WHERE f.age &gt;= &lt;age&gt;)&quot;)]
-    age_rated_films:u64
-}
-#}</code></pre></pre>
+        #[toql(sql=&quot;(SELECT &lt;page_limit&gt;)&quot;)]
+        page_limit:u64,
+
+        #[toql(sql=&quot;(SELECT COUNT(*) FROM Films f WHERE f.age &gt;= &lt;age&gt;)&quot;)]
+        age_rated_films:u64
+    }
+ 
+    let mut p = HashMap::new();
+    p.insert(&quot;page_limit&quot;.into(), 200.into());
+    p.insert(&quot;age&quot;.into(), 57.into());
+
+    let context = ContextBuilder::new().with_aux_params(p).build();
+    let cache = Cache::new();
+    let mut toql = MockDb::with_context(&amp;cache, context);
+
+    let q = query!(User, &quot;id&quot;); 
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, (SELECT 200), (SELECT COUNT(*) FROM Films f WHERE f.age &gt;= 57) FROM User user&quot;);
+#   }
+</code></pre></pre>
 <p>In the example <em>page_limit</em> might come from a server configuration.
 It would typically be put in the <a href="../3-api/1-introduction.html">context</a> and can be used in SQL expressions.</p>
 <p>The aux param <em>age</em> might be taken from the authorisation token and put as an aux param into the context or query.

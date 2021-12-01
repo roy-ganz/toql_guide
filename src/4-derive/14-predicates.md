@@ -33,16 +33,16 @@ If there is only one argument, it can also be used to build an `ON` predicate in
 ## Reference
 
 The full predicate syntax is
-`predicate(name="..", sql="..", handler="..", on_aux_param="..", count_filter=true|false)` 
+`predicate(name="..", sql="..", handler="..", on_aux_param(name"..", index = .), count_filter=true|false)` 
 where 
 - __name__ is the name of the predicate. It can be called in a Toql query with `@name ..`. 
   If a predicate is defined on a joined struct, that predicate can be called with a path
   `@path_name ..`. See [predicates in the query](5-query-language/5-predictes.md) for more details.
-- __sql__ is a raw QL expression. Use `?` to insert a predicate param in the SQL, 
+- __sql__ is a raw SQL expression. Use `?` to insert a predicate param in the SQL, 
   `..` for the table alias and `<aux_param>` for an aux param value.
 - __handler__ allows a custom predicate handler (build SQL with a function). 
   Provide a function name without parenthesis that return a struct that implement `toql::prelude::PredicateHandler`
-- __on_aux_param__ sets the value of an aux_param. This aux param is only available when building custom joins
+- __on_aux_param__ sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first `?`. This aux param is only available when building custom joins.
   and can only be used when the predicate takes exactly one argument. See [example](7-join.md).
 - __count_filter__ determines if a predicate used in Toql query should also be used for [count queries](3-api/2-load.md). 
   Default is `false`.

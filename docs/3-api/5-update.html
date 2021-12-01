@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Update - Toql book</title>
+        <title>Update - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -143,23 +143,42 @@
                         <a class="header" href="#updates" id="updates"><h2>Updates</h2></a>
 <p>There are two update functions: <code>update_one</code> and <code>update_many</code>.</p>
 <p>They are used like so:</p>
-<pre><code>use toql::prelude::{ToqlApi, fields};
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+use toql::prelude::{Cache, Toql, ToqlApi, fields};
+use toql::mock_db::MockDb;
 
-let u = User {id:27, title: &quot;hello&quot;.to_string(), address: None};
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+    address: Option&lt;String&gt;
+}
 
-toql.update_one(&amp;mut u, fields!(top))?;
-toql.update_one(&amp;mut u, fields!(User, &quot;*&quot;))?;
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
 
-toql.update_many(&amp;[&amp;mut u], fields!(top))?;
-</code></pre>
-<p>In the example above all three statements do the same.</p>
+let mut user = User {id:27, name: &quot;Susan&quot;.to_string(), address: None};
+
+toql.update_one(&amp;mut user, fields!(top)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), &quot;UPDATE User SET name = \'Susan\' WHERE id = 27&quot;);
+
+toql.update_one(&amp;mut user, fields!(User, &quot;*&quot;)).await.unwrap();
+
+toql.update_many::&lt;User, _&gt;(&amp;mut [&amp;mut user], fields!(top)).await.unwrap();
+toql.update_many(&amp;mut [user], fields!(top)).await.unwrap();
+#   }
+</code></pre></pre>
+<p>In the example above all four statements do the same.</p>
 <a class="header" href="#the-fields-macro" id="the-fields-macro"><h3>The fields! macro</h3></a>
 <p>The <code>fields!</code> macro compiles a list of fields. Any invalid path or field name shows up at compile time.</p>
 <p>The update function will consider all fields from the field list to update. Optional fields will only
 be updated if they contain some value. See <a href="4-derive/12-update.html">the mapping</a> for details.</p>
 <a class="header" href="#joins" id="joins"><h4>Joins</h4></a>
 <p>You can update only the foreign key of a join or field from the join. Consider this field list:</p>
-<pre><code>let f = fields!(User, &quot;*, address, address_*, address_id&quot;)
+<pre><code class="language-rust ignore">let f = fields!(User, &quot;*, address, address_*, address_id&quot;);
 </code></pre>
 <p>With <code>*</code> we consider all fields from User for updating,
 <code>address</code> will update the foreign key to <code>Address</code> in the <code>User</code> table,
@@ -174,7 +193,7 @@ It's just mentioned explicitly for the purpose of learning.</p>
 <li>or insert new structs in the <code>Vec</code> and delete removed structs.</li>
 </ul>
 <p>Consider this field list:</p>
-<pre><code>let f = fields!(User, &quot;*, books, books_*&quot;)
+<pre><code class="language-rust ignore">let f = fields!(User, &quot;*, books, books_*&quot;);
 </code></pre>
 <ul>
 <li>With <code>*</code> we consider all simple fields from User for updating (this excludes merges),</li>
@@ -183,7 +202,12 @@ it inserts new book (toghether with possible <a href="../4-derive/8-partial-tabl
 <li><code>books_*</code> will update all simple fields in the existing <code>books</code>.</li>
 </ul>
 <a class="header" href="#example-updating-a-vec-with-new-items" id="example-updating-a-vec-with-new-items"><h3>Example: Updating a Vec with new items.</h3></a>
-<pre><code>    #[derive(Debug, PartialEq, Toql)]
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main(){
+    use toql::prelude::{Cache, Toql, ToqlApi, fields};
+    use toql::mock_db::MockDb;
+
+    #[derive(Debug, PartialEq, Toql)]
     struct Book {
         #[toql(key)]
         id: u64,
@@ -193,7 +217,7 @@ it inserts new book (toghether with possible <a href="../4-derive/8-partial-tabl
     }
 
     #[derive(Debug, PartialEq, Toql)]
-     #[toql(auto_key = true)]
+     #[toql(auto_key)]
     struct User {
         #[toql(key)]
         id: u64,
@@ -201,10 +225,13 @@ it inserts new book (toghether with possible <a href="../4-derive/8-partial-tabl
         #[toql(merge())]
         books : Option&lt;Vec&lt;Book&gt;&gt;
     }
+    
+    let cache = Cache::new();
+    let mut toql = MockDb::from(&amp;cache);
 
-    let u = User {
+    let mut user = User {
         id: 27,
-        title: Some(&quot;Joe Pencil&quot;),
+        name: Some(&quot;Joe&quot;.to_string()),
         books: Some(vec![
             Book{
                 id: 100,
@@ -217,11 +244,20 @@ it inserts new book (toghether with possible <a href="../4-derive/8-partial-tabl
                 title: Some(&quot;Batman&quot;.to_string())
             }
         ])
-    }
+    };
 
-    toql.update_one(&amp;mut u, fields!(&quot;*, books, books_*&quot;)).await?;
-    
-</code></pre>
+    toql.update_one(&amp;mut user, fields!(User, &quot;*, books, books_*&quot;)).await.unwrap();
+    assert_eq!(toql.take_unsafe_sqls(), 
+   [&quot;UPDATE Book SET title = 'Batman' WHERE id = 200 AND user_id = 27&quot;, 
+    &quot;UPDATE User SET name = 'Joe' WHERE id = 27&quot;,
+    &quot;DELETE user_books FROM Book user_books \
+        JOIN User user ON user.id = user_books.user_id \
+        WHERE user.id = 27 AND NOT (user_books.id = 200 AND user_books.user_id = 27)&quot;, 
+    &quot;INSERT INTO Book (id, user_id, title) VALUES (100, 27, 'King Kong')&quot;]
+    );
+
+#   }    
+</code></pre></pre>
 <p>To mark new books, add them with an invalid key. A value of <code>0</code> or an empty string <code>''</code> is considered invalid.
 Normally databases start counting indexes from 1 and some databases consider an empty string like null, which is
 also forbidden as primary key. So this idea of invalid key should normally work, however check with you database.</p>

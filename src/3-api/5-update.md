@@ -4,19 +4,37 @@ There are two update functions: `update_one` and `update_many`.
 
 They are used like so:
 
+```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main(){
+use toql::prelude::{Cache, Toql, ToqlApi, fields};
+use toql::mock_db::MockDb;
+
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User{
+    #[toql(key)]
+    id: u64,
+    name: String,
+    address: Option<String>
+}
+
+let cache = Cache::new();
+let mut toql = MockDb::from(&cache);
+
+let mut user = User {id:27, name: "Susan".to_string(), address: None};
+
+toql.update_one(&mut user, fields!(top)).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), "UPDATE User SET name = \'Susan\' WHERE id = 27");
+
+toql.update_one(&mut user, fields!(User, "*")).await.unwrap();
+
+toql.update_many::<User, _>(&mut [&mut user], fields!(top)).await.unwrap();
+toql.update_many(&mut [user], fields!(top)).await.unwrap();
+#   }
 ```
-use toql::prelude::{ToqlApi, fields};
 
-let u = User {id:27, title: "hello".to_string(), address: None};
-
-toql.update_one(&mut u, fields!(top))?;
-toql.update_one(&mut u, fields!(User, "*"))?;
-
-toql.update_many(&[&mut u], fields!(top))?;
-```
-
-In the example above all three statements do the same.
-
+In the example above all four statements do the same. 
 
 
 ### The fields! macro
@@ -28,8 +46,8 @@ be updated if they contain some value. See [the mapping](4-derive/12-update.md) 
 #### Joins
 You can update only the foreign key of a join or field from the join. Consider this field list:
 
-```
-let f = fields!(User, "*, address, address_*, address_id")
+```rust, ignore
+let f = fields!(User, "*, address, address_*, address_id");
 ```
 
 With `*` we consider all fields from User for updating, 
@@ -47,8 +65,8 @@ Updates can either
 
 Consider this field list:
 
-```
-let f = fields!(User, "*, books, books_*")
+```rust, ignore
+let f = fields!(User, "*, books, books_*");
 ```
 
 - With `*` we consider all simple fields from User for updating (this excludes merges), 
@@ -58,7 +76,12 @@ it inserts new book (toghether with possible [partial joins](../4-derive/8-parti
 
 ### Example: Updating a Vec with new items.
 
-```
+```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main(){
+    use toql::prelude::{Cache, Toql, ToqlApi, fields};
+    use toql::mock_db::MockDb;
+
     #[derive(Debug, PartialEq, Toql)]
     struct Book {
         #[toql(key)]
@@ -77,10 +100,13 @@ it inserts new book (toghether with possible [partial joins](../4-derive/8-parti
         #[toql(merge())]
         books : Option<Vec<Book>>
     }
+    
+    let cache = Cache::new();
+    let mut toql = MockDb::from(&cache);
 
-    let u = User {
+    let mut user = User {
         id: 27,
-        title: Some("Joe Pencil"),
+        name: Some("Joe".to_string()),
         books: Some(vec![
             Book{
                 id: 100,
@@ -93,10 +119,19 @@ it inserts new book (toghether with possible [partial joins](../4-derive/8-parti
                 title: Some("Batman".to_string())
             }
         ])
-    }
+    };
 
-    toql.update_one(&mut u, fields!("*, books, books_*")).await?;
-    
+    toql.update_one(&mut user, fields!(User, "*, books, books_*")).await.unwrap();
+    assert_eq!(toql.take_unsafe_sqls(), 
+   ["UPDATE Book SET title = 'Batman' WHERE id = 200 AND user_id = 27", 
+    "UPDATE User SET name = 'Joe' WHERE id = 27",
+    "DELETE user_books FROM Book user_books \
+        JOIN User user ON user.id = user_books.user_id \
+        WHERE user.id = 27 AND NOT (user_books.id = 200 AND user_books.user_id = 27)", 
+    "INSERT INTO Book (id, user_id, title) VALUES (100, 27, 'King Kong')"]
+    );
+
+#   }    
 ```
 
 To mark new books, add them with an invalid key. A value of `0` or an empty string `''` is considered invalid.

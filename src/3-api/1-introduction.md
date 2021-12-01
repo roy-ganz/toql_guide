@@ -9,11 +9,10 @@ This chapter explains how to use the `ToqlApi` trait.
 Notice that you must derive your structs before you can load or modify them 
 with the `ToqlApi`. See the [derive chapter](../4-derive/1-introduction.md) for details.
 
-
 The common `ToqlApi` trait makes it also possible to write database independend code. This is described [here](8-backend-independence.md).
 
 ## Creating the backend
-To use the `ToqlApi` functions you need a Toql backend and the driver for your database. 
+To use the `ToqlApi` functions you need a Toql backend for your database. 
 
 Currently the following backends are available
 
@@ -25,8 +24,8 @@ For MySQL add this to your `cargo.toml`:
 
 ```toml
 [dependency]
-toql = "0.3"
-toql_mysql_async = "0.3"
+toql = "0.4"
+toql_mysql_async = "0.4"
 ```
 
 You must add `toql ` together with the backend crate. The backend crate then depends on a suitable version of the driver crate.
@@ -37,16 +36,22 @@ With these two dependencies you can get the backend in your code. Notice that th
 a database connection and a cache object to hold the database mapping.
 
 ```rust
-use mysql_async::MySql;
-use toql_mysql_async::prelude::MySqlAsync;
-use toql::prelude::Cache;
 
-let pool = mysql_async::Pool::new(database_url);
-let mut conn = pool.get_conn().await?;
+use toql::prelude::Cache;
+use toql::mock_db::MockDb;
 
 let cache = Cache::new();
+let mut toql = MockDb::from(&cache);
 
-let toql = MySqlAsync::from(&mut conn, &cache);
+// For MySQL
+// use toql_mysql_async::{prelude::MySqlAsync, mysql_async};
+//
+// let database_url = "mysql://USER:PASS@localhost:3306/DATABASE";
+// let pool = mysql_async::Pool::new(database_url);
+// let mut conn = pool.get_conn().await.unwrap();
+// let toql = MySqlAsync::from(&mut conn, &cache);
+
+
 ```
 
 In a bigger project you may want to feed configuration or authentication values into your SQL.
@@ -61,25 +66,29 @@ There are three ways to feed in aux params:
 Here how to put them in the context:
 
 ```rust
-use mysql_async::MySql;
-use toql_mysql_async::prelude::MySqlAsync;
 use toql::prelude::{Cache, ContextBuilder};
+use toql::mock_db::MockDb;
 use std::collections::HashMap;
-
-
-let pool = mysql_async::Pool::new(database_url);
-let mut conn = pool.get_conn().await?;
 
 let mut p = HashMap::new();
 p.insert("page_limit".into(), 200.into());
 
 let context = ContextBuilder::new().with_aux_params(p).build();
 let cache = Cache::new();
-let toql = MySqlAsync::with_context(&mut conn, &cache, context);
+let mut toql = MockDb::with_context(&cache, context);
+
+// For MySQL
+// use toql_mysql_async::{prelude::MySqlAsync, mysql_async};
+//
+// let database_url = "mysql://USER:PASS@localhost:3306/DATABASE";
+// let pool = mysql_async::Pool::new(database_url);
+// let mut conn = pool.get_conn().await.unwrap();
+// let toql = MySqlAsync::with_context(&mut conn, &cache, context);
+
 ```
 
 Beside aux params `ContextBuilder` allows you 
-  - to choose an alias format (`user.id`, `us1.id`, `t0.id`, ...)
+  - to choose an alias format (`user.id`, `us1.id`, `t1.id`, ...)
   - set the roles for [access control](../4-derive/16-roles.md)
 
 
@@ -88,10 +97,11 @@ Beside aux params `ContextBuilder` allows you
  use std::collections::HashSet;
 
  let mut roles = HashSet::new();
- roles.insert("teacher", "admin");
+ roles.insert("teacher".to_string());
+ roles.insert("admin".to_string());
 
   let context = ContextBuilder::new()
-    .with_alias(AliasFormat::Tiny)
+    .with_alias_format(AliasFormat::TinyIndex)
     .with_roles(roles)
     .build();
  ```

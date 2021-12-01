@@ -14,6 +14,7 @@ This derive builds _a lot_ of code. This includes
 With this simple code
 
  ```rust
+ 	use toql::prelude::Toql;
 	#[derive(Toql)]
 	struct User {
 		#[toql(key)]
@@ -25,15 +26,28 @@ With this simple code
 We can now do the following
 
 ```rust
-use toql::mysql::load_one; // Load function from derive
-use toql::mysql::update_one; // Update function from derive
+ 	use toql::prelude::{query, ToqlApi, Cache, Toql, Page, fields};
+    use toql::mock_db::MockDb;
+	use toql::row;
 
-let toql = --snip--
-let cache = 
+#    #[derive(Toql)]
+#    struct User {
+#      #[toql(key)]
+#      id: u64,
+#      age: Option<u8>
+#    }
 
-let q = query!(User, "id eq 5"); 
-let mut user = toql.load_one(&q); 
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+    
+	let cache = Cache::default();
+    let mut toql = MockDb::from(&cache);
+	toql.mock_rows("SELECT user.id, user.age FROM User user WHERE user.id = 5", vec![row!(5u64, 27u64)]);
+  
+	let q = query!(User, "id eq 5, age"); 
+	let mut user = toql.load_one(&q).await.unwrap(); 
 
-user.age = Some(16);
-toql.update_one(&mut user); 
+	user.age = Some(16);
+	toql.update_one(&mut user, fields!(top)).await.unwrap(); 
+# }
 ```

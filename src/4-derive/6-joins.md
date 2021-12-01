@@ -10,25 +10,35 @@ Joins are added to the SQL statement when
 #### Join mapping example
 
 ```rust
+use toql::prelude::Toql;
+
+#[derive(Toql)]
+struct Phone {
+	#[toql(key)]
+	country: u8,
+	#[toql(key)]
+	number: u64,
+}
+
 #[derive(Toql)]
 struct User {
 
 	#[toql(key)]
 	 id: u32,	
 
-	 name: Option<String>
+	 name: Option<String>,
 
 	 #[toql(join())]  
-	 phone1 : Phone // Always selected inner join
+	 phone1 : Phone, 		// Always selected inner join
 
 	 #[toql(join())]  
-	 phone2 : Option<Phone> // Selectable inner join
+	 phone2 : Option<Phone>, // Selectable inner join
 
 	 #[toql(join())]  
-	 phone3 : Option<Option<Phone>> // Selectable left join
+	 phone3 : Option<Option<Phone>>, // Selectable left join
 
 	 #[toql(join(), preselect)]  
-	 phone4 : Option<Phone> // Always selected left join
+	 phone4 : Option<Phone>, // Always selected left join
 }
 ```
 Notice how `Option` makes the difference between an inner join and a left join.
@@ -39,7 +49,7 @@ For the above it would be *phone1_id*, *phone2_id*, *phone3_id* and *phone4_id*.
 
 
 If your naming scheme differs from that default behaviour, use the `columns` attribute:
-```rust
+```rust, ignore
 #[toql(join(columns(self="mobile1_id", other="id")))]  
 phone1 : Phone 
 ```
@@ -54,35 +64,63 @@ It's possible to restrict the join with a `ON` SQL predicate.
 Here an example of a translated country name. 
 
 ```rust
-#[derive(Toql)]
-struct User {
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+	use toql::prelude::{Toql, ToqlApi,Cache, query, ContextBuilder};
+	use toql::mock_db::MockDb;
+	use std::collections::HashMap;
 
-	#[toql(key)]
-	 id: u32,	
+	#[derive(Toql)]
+	struct User {
+		#[toql(key)]
+		id: u32,	
 
-	 country: Option<Country>
-}
+		#[toql(join)]
+		country: Option<Country>
+	}
+ 
+	#[derive(Toql)]
+	struct Country {
 
-#[derive(Toql)]
-struct Country {
+		#[toql(key)]
+		id: u32,	
 
-	#[toql(key)]
-	 id: u32,	
+		#[toql(join(
+				columns(self = "id", other = "id"), 
+				on_sql = "...language_id=<interface_language_id>"))]
+		pub translation: Option<CountryTranslation>
+	}
 
-	#[toql(join(columns(self = "id", other = "id"), 
-			on_sql = "...language_id=<interface_language_id>"
-        ),
-    )]
-    pub translation: Option<CountryTranslation>
-}
-#[derive(Toql)]
-pub struct CountryTranslation {
+	#[derive(Toql)]
+	pub struct CountryTranslation {
 
-    #[toql(key)]
-    pub id: String,
+		#[toql(key)]
+		pub id: String,
+		
+		pub title: String,
+	}
+
+  
+    let mut p = HashMap::new();
+    p.insert("interface_language_id".into(), "en".into());
     
-    pub title: String,
-}
+    let context = ContextBuilder::new().with_aux_params(p).build();
+    let cache = Cache::new();
+    let mut toql = MockDb::with_context(&cache, context);
+
+    let q = query!(User, "country_translation_title");
+
+    let mut _users = toql.load_many(&q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            "SELECT user.id, user_country.id, user_country_translation.id, user_country_translation.title \
+				FROM User user \
+				JOIN (Country user_country \
+					JOIN (CountryTranslation user_country_translation) \
+					ON (user_country.id = user_country_translation.id \
+						AND user_country_translation.language_id='en')) \
+				ON (user.country_id = user_country.id)"); 
+#   }
+
 ```
 You can use any raw SQL in the `ON` predicate. Did you spot the `...` alias? 
 This will resolve to the alias of the joined struct (CountryTranslation). 
@@ -100,35 +138,51 @@ This allows some nifty joining, see here:
 
 ### Example with on_aux_param
 ```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+	use toql::prelude::{Toql, ToqlApi,Cache, query, ContextBuilder};
+	use toql::mock_db::MockDb;
 
-#[derive(Toql)]
-#[toql( predicate(
-			name ="language", 
-			sql="EXISTS(SELECT 1 FROM Country c \
-				JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)", 
-			on_aux_param="language_id"
-		))]
-struct Country {
 
-	#[toql(key)]
-	 id: u32,	
+	#[derive(Toql)]
+	#[toql( predicate(	
+				name = "language", 
+				sql = "EXISTS(SELECT 1 FROM Country c \
+					JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)", 
+				on_aux_param(name="language_id", index = 0)
+			))]
+	struct Country {
 
-	#[toql(join(columns(self = "id", other = "country_id"), 
-			on_sql = "...id=<language_id>"
-        ),
-    )]
-    pub language: Option<Language>
-}
+		#[toql(key)]
+		id: u32,	
 
-#[derive(Toql)]
-#[toql(auto_key = false))]
-pub struct Language {
+		#[toql(join(on_sql = "...code = <language_id>"))]
+		pub language: Option<Language>
+	}
 
-    #[toql(key)]
-    pub id: String,
-    
-    pub title: String,
-}
+	#[derive(Toql)]
+	pub struct Language {
+
+		#[toql(key)]
+		pub code: String,
+		
+		pub title: String,
+	}
+	 let cache = Cache::new();
+    let mut toql = MockDb::from(&cache);
+
+    let q = query!(Country, "@language 'fr'");
+
+    let mut _users = toql.load_many(&q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            "SELECT user.id, user_country.id, user_country_translation.id, user_country_translation.title \
+				FROM User user \
+				JOIN (Country user_country \
+					JOIN (CountryTranslation user_country_translation) \
+					ON (user_country.id = user_country_translation.id \
+						AND user_country_translation.language_id='en')) \
+				ON (user.country_id = user_country.id)"); 
+#   }
 ```
 
 Above we add a predicate that allows to filter all countries by a language.
@@ -136,7 +190,7 @@ There can be multiple countries that speak the same language.
 
 The predicate takes the one argument (`?`) and adds it to the aux_params for custom joins (`on_param`). 
 
-When the predicate is used in a Toql query, lets say  `*, @language 'fr'` the SQL will return  countries that speak french.
+When the predicate is used in a Toql query, lets say  `*, @language 'fr'` the SQL will return countries that speak french.
 In addition it will add `fr` to the aux_params when doing the custom join.  
 
 So each country will contain the `language` field with information about french.
@@ -159,14 +213,23 @@ Thats why the `Join` enum exists. It can either take a struct value or just its 
 
 Consider this
 
-```rust
+```rust, ignore
+use toql::prelude::Toql;
+# 	#[derive(Toql)]
+# 	struct Phone {
+#		#[toql(key)]
+#		country: u8,
+#		#[toql(key)]
+#		number: u64,
+#	}
+
 #[derive(Toql)]
 struct User {
 
 	#[toql(key)]
 	 id: u32,	
 
-	#[toql(join())]
+	#[toql(join)]
 	 phone: Phone
 }
 ```
@@ -175,17 +238,26 @@ Here when we want to set a new `Phone` for the user, we need to provide a full `
 even tough we only want to set a new value for the foreign key `phone_id` in `User`.
 This feels unnesseary and `toql::prelude::Join` comes to our rescue:
 
-```rust
+```rust,ignore
+use toql::prelude::{Toql, Join};
+# 	#[derive(Toql)]
+# 	struct Phone {
+#		#[toql(key)]
+#		country: u8,
+#		#[toql(key)]
+#		number: u64,
+#	}
+
 #[derive(Toql)]
 struct User {
 
 	#[toql(key)]
 	 id: u32,	
 
-	#[toql(join())]
-	 phone: Join<Phone>
+	#[toql(join)]
+	 phone: Join<Phone>,
 
-	 #[toql(join())]
+	 #[toql(join)]
 	 phone2: Option<Option<Join<Phone>>>
 }
 ```

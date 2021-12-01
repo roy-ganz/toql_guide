@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Merges - Toql book</title>
+        <title>Merges - Toql book 0.4</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -105,7 +105,7 @@
                             
                         </div>
 
-                        <h1 class="menu-title">Toql book</h1> 
+                        <h1 class="menu-title">Toql book 0.4</h1> 
 
                         <div class="right-buttons">
                             <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -146,7 +146,7 @@
 # #![allow(unused_variables)]
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct User {
 
     #[toql(key)]
@@ -184,7 +184,7 @@ from the composite key. In those situations it's often desirable to skip it.</p>
 # #![allow(unused_variables)]
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_key = true)]
+#[toql(auto_key)]
 struct User {
 
     #[toql(key)]
@@ -253,7 +253,7 @@ But since it's not, we have to mark it with <code>#[foreign_key]</code>. This te
 # #![allow(unused_variables)]
 #fn main() {
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct User {
     #[toql(key)]
     id: u64,
@@ -264,7 +264,7 @@ struct User {
 
 
 #[derive(Toql)]
-#[toql(auto_keys= true)]
+#[toql(auto_key)]
 struct Todo {
     #[toql(key)]
     id: u64,
