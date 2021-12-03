@@ -30,8 +30,8 @@ build a custom field handler. Like so
 
 ```rust
 
-use toql::prelude::{FieldHandler, DefaultFieldHandler, 
-	SqlExpr, ParameterMap, SqlBuilderError, SqlArg, sql_expr};
+use toql::prelude::{Toql, FieldHandler, DefaultFieldHandler, 
+	SqlExpr, ParameterMap, SqlBuilderError, SqlArg, sql_expr, FieldFilter};
 
 #[derive(Toql)]
 #[toql(auto_key)]
@@ -54,7 +54,7 @@ struct Todo {
 // Todos with any permissions -> `*, permission ne ''` 
 // Todos with UPDATE permission -> `*, permission fn sc 'UPDATE'` 
 struct PermissionFieldHandler{
-	 default_handler: defaultFieldHandler, // The default field handler gives us default filters, such as `ne`
+	 default_handler: DefaultFieldHandler, // The default field handler gives us default filters, such as `ne`
 };
 	
 impl FieldHandler for PermissionFieldHandler
@@ -105,17 +105,16 @@ pub fn filter_sc(
 ) -> Result<Option<SqlExpr>, SqlBuilderError> {
     if args.len() != 1 {
         return Err(SqlBuilderError::FilterInvalid(
-            "filter `{}` expects exactly 1 argument",
-            name
-        )));
+            format!("filter `{}` expects exactly 1 argument",name)));
     }
 	        
-    Ok(Some(sql_expr!("FIND_IN_SET (? , {})", args[0], select)))
+    Ok(Some(sql_expr!("FIND_IN_SET (? , {})", &args[0], select)))
+    
 }
 
 // Getter fucntion for the mapper
 pub fn permission_handler() -> impl FieldHandler {
-    PermissionFieldHandler:{
+    PermissionFieldHandler {
 		 default_handler: DefaultFieldHandler::new(), 
 	}
 }

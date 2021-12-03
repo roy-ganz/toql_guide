@@ -154,6 +154,14 @@
 use toql::prelude::Toql;
 
 #[derive(Toql)]
+struct Phone {
+    #[toql(key)]
+    country: u8,
+    #[toql(key)]
+    number: u64,
+}
+
+#[derive(Toql)]
 struct User {
 
     #[toql(key)]
@@ -188,28 +196,28 @@ phone1 : Phone
 <p>Here an example of a translated country name.</p>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
 #   async fn main() {
-    use toql::prelude::{Toql};
+    use toql::prelude::{Toql, ToqlApi,Cache, query, ContextBuilder};
     use toql::mock_db::MockDb;
+    use std::collections::HashMap;
 
     #[derive(Toql)]
     struct User {
-
         #[toql(key)]
         id: u32,	
 
+        #[toql(join)]
         country: Option&lt;Country&gt;
     }
-
+ 
     #[derive(Toql)]
     struct Country {
 
         #[toql(key)]
         id: u32,	
 
-        #[toql(join(columns(self = &quot;id&quot;, other = &quot;id&quot;), 
-                on_sql = &quot;...language_id=&lt;interface_language_id&gt;&quot;
-            ),
-        )]
+        #[toql(join(
+                columns(self = &quot;id&quot;, other = &quot;id&quot;), 
+                on_sql = &quot;...language_id=&lt;interface_language_id&gt;&quot;))]
         pub translation: Option&lt;CountryTranslation&gt;
     }
 
@@ -222,16 +230,25 @@ phone1 : Phone
         pub title: String,
     }
 
+  
+    let mut p = HashMap::new();
+    p.insert(&quot;interface_language_id&quot;.into(), &quot;en&quot;.into());
+    
+    let context = ContextBuilder::new().with_aux_params(p).build();
     let cache = Cache::new();
-    let mut toql = MockDb::from(&amp;cache);
+    let mut toql = MockDb::with_context(&amp;cache, context);
 
     let q = query!(User, &quot;country_translation_title&quot;);
 
     let mut _users = toql.load_many(&amp;q).await.unwrap(); 
     assert_eq!(toql.take_unsafe_sql(), 
-            &quot;SELECT user.id, user.name \
-            FROM User user \
-            WHERE LENGTH (user.name) &lt;= 5&quot;);
+            &quot;SELECT user.id, user_country.id, user_country_translation.id, user_country_translation.title \
+                FROM User user \
+                JOIN (Country user_country \
+                    JOIN (CountryTranslation user_country_translation) \
+                    ON (user_country.id = user_country_translation.id \
+                        AND user_country_translation.language_id='en')) \
+                ON (user.country_id = user_country.id)&quot;); 
 #   }
 
 </code></pre></pre>
@@ -244,40 +261,56 @@ Aux params usually come from a context, query.</p>
 <p>However for <code>ON</code> there is a third source : Aux params may also come from <a href="10-predicates.html">query predicates</a>.</p>
 <p>This allows some nifty joining, see here:</p>
 <a class="header" href="#example-with-on_aux_param" id="example-with-on_aux_param"><h3>Example with on_aux_param</h3></a>
-<pre><code class="language-rust ignore">
-#[derive(Toql)]
-#[toql( predicate(
-            name =&quot;language&quot;, 
-            sql=&quot;EXISTS(SELECT 1 FROM Country c \
-                JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)&quot;, 
-            on_aux_param=&quot;language_id&quot;
-        ))]
-struct Country {
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+    use toql::prelude::{Toql, ToqlApi,Cache, query, ContextBuilder};
+    use toql::mock_db::MockDb;
 
-    #[toql(key)]
-     id: u32,	
 
-    #[toql(join(columns(self = &quot;id&quot;, other = &quot;country_id&quot;), 
-            on_sql = &quot;...id=&lt;language_id&gt;&quot;
-        ),
-    )]
-    pub language: Option&lt;Language&gt;
-}
+    #[derive(Toql)]
+    #[toql( predicate(	
+                name = &quot;language&quot;, 
+                sql = &quot;EXISTS(SELECT 1 FROM Country c \
+                    JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)&quot;, 
+                on_aux_param(name=&quot;language_id&quot;, index = 0)
+            ))]
+    struct Country {
 
-#[derive(Toql)]
-#[toql(auto_key = false))]
-pub struct Language {
+        #[toql(key)]
+        id: u32,	
 
-    #[toql(key)]
-    pub id: String,
-    
-    pub title: String,
-}
-</code></pre>
+        #[toql(join(on_sql = &quot;...code = &lt;language_id&gt;&quot;))]
+        pub language: Option&lt;Language&gt;
+    }
+
+    #[derive(Toql)]
+    pub struct Language {
+
+        #[toql(key)]
+        pub code: String,
+        
+        pub title: String,
+    }
+    let cache = Cache::new();
+    let mut toql = MockDb::from(&amp;cache);
+
+    let q = query!(Country, &quot;@language 'fr'&quot;);
+
+    let mut _users = toql.load_many(&amp;q).await.unwrap(); 
+    assert_eq!(toql.take_unsafe_sql(), 
+            &quot;SELECT user.id, user_country.id, user_country_translation.id, user_country_translation.title \
+                FROM User user \
+                JOIN (Country user_country \
+                    JOIN (CountryTranslation user_country_translation) \
+                    ON (user_country.id = user_country_translation.id \
+                        AND user_country_translation.language_id='en')) \
+                ON (user.country_id = user_country.id)&quot;); 
+#   }
+</code></pre></pre>
 <p>Above we add a predicate that allows to filter all countries by a language.
 There can be multiple countries that speak the same language.</p>
 <p>The predicate takes the one argument (<code>?</code>) and adds it to the aux_params for custom joins (<code>on_param</code>).</p>
-<p>When the predicate is used in a Toql query, lets say  <code>*, @language 'fr'</code> the SQL will return  countries that speak french.
+<p>When the predicate is used in a Toql query, lets say  <code>*, @language 'fr'</code> the SQL will return countries that speak french.
 In addition it will add <code>fr</code> to the aux_params when doing the custom join.</p>
 <p>So each country will contain the <code>language</code> field with information about french.</p>
 <p>It's somehow hacky, but it works and is useful in 1-n situations when you want 1-1 .</p>
@@ -289,38 +322,50 @@ Joins with custom <code>ON</code> expressions can't be inserted or updated, they
 <p>Joining directly another struct is not ergonomic when you want to update the struct.
 Thats why the <code>Join</code> enum exists. It can either take a struct value or just its key.</p>
 <p>Consider this</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><code class="language-rust ignore">use toql::prelude::Toql;
+# 	#[derive(Toql)]
+# 	struct Phone {
+#		#[toql(key)]
+#		country: u8,
+#		#[toql(key)]
+#		number: u64,
+#	}
+
 #[derive(Toql)]
 struct User {
 
     #[toql(key)]
      id: u32,	
 
-    #[toql(join())]
+    #[toql(join)]
      phone: Phone
 }
-#}</code></pre></pre>
+</code></pre>
 <p>Here when we want to set a new <code>Phone</code> for the user, we need to provide a full <code>Phone</code> struct
 even tough we only want to set a new value for the foreign key <code>phone_id</code> in <code>User</code>.
 This feels unnesseary and <code>toql::prelude::Join</code> comes to our rescue:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><code class="language-rust ignore">use toql::prelude::{Toql, Join};
+# 	#[derive(Toql)]
+# 	struct Phone {
+#		#[toql(key)]
+#		country: u8,
+#		#[toql(key)]
+#		number: u64,
+#	}
+
 #[derive(Toql)]
 struct User {
 
     #[toql(key)]
      id: u32,	
 
-    #[toql(join())]
-     phone: Join&lt;Phone&gt;
+    #[toql(join)]
+     phone: Join&lt;Phone&gt;,
 
-     #[toql(join())]
+     #[toql(join)]
      phone2: Option&lt;Option&lt;Join&lt;Phone&gt;&gt;&gt;
 }
-#}</code></pre></pre>
+</code></pre>
 <p>This has the following advantages:</p>
 <ul>
 <li>Loads as normal, <code>Join</code> will always hold a full value.</li>

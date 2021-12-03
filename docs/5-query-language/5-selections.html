@@ -143,8 +143,7 @@
                         <a class="header" href="#selections" id="selections"><h1>Selections</h1></a>
 <p>A typical query selects a lot of fields. Instead of writing out a long list of fields, predefined field lists can be <a href="../3-api/9-selections.html">mapped</a>.</p>
 <p>The list can then be selected with a <code>$</code> followed by the selection name.</p>
-<pre><code class="language-toql">$mySelection, $otherSelection
-</code></pre>
+<p><code>$mySelection, $otherSelection</code></p>
 <p>There is a set of predefined selections:</p>
 <table><thead><tr><th>Selection </th><th> Scope</th></tr></thead><tbody>
 <tr><td> $std     </td><td> Standart selection, must be  to be used</td></tr>
@@ -155,8 +154,7 @@
 </tbody></table>
 <p>Selections on a dependency can be used with a path.</p>
 <p>To load the standart selection from a dependency <code>address</code> use</p>
-<pre><code class="language-toql">$address_std
-</code></pre>
+<p><code>$address_std</code></p>
 <a class="header" href="#restriction-on-selection-names" id="restriction-on-selection-names"><h3>Restriction on selection names</h3></a>
 <p>Selection names with 3 or less characters are reserved for internal purposes.
 User defined selection names must contain at least 4 characters.</p>

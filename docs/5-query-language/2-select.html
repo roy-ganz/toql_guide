@@ -151,11 +151,9 @@
 </li>
 </ul>
 <a class="header" href="#example" id="example"><h4>Example</h4></a>
-<pre><code>id, book_id
-</code></pre>
-<p>is translated into (SQL Mapper must be told how to join)</p>
-<pre><code>SELECT a.id, b.id FROM User a JOIN Book b ON (a.book_id = b.id)
-</code></pre>
+<p><code>id, book_id</code></p>
+<p>is translated into (assume a struct <code>User</code> that joins to a struct <code>Book</code>)</p>
+<p><code>SELECT a.id, b.id FROM User a JOIN Book b ON (a.book_id = b.id)</code></p>
 <a class="header" href="#wildcards" id="wildcards"><h2>Wildcards</h2></a>
 <p>There are two wildcards to select multiple fields. They can neither be filtered nor ordered.</p>
 <ul>

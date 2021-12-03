@@ -7,11 +7,11 @@ Fields are selected if they are mentioned in the query.
 - Fields with underscores are called _fields with a path_. They are mapped to a joined or a merged dependency. For a join relationship, the join will be added to the SQL statement if the field is selected. For a merge relationship a second SQL query is run and the results are merged. Such a query might look like this `book_id, book_title, book_createdBy_id, sellers_city`
 
 #### Example
-    id, book_id
- 
- is translated into (SQL Mapper must be told how to join)
- 
-    SELECT a.id, b.id FROM User a JOIN Book b ON (a.book_id = b.id)
+`id, book_id` 
+
+is translated into (assume a struct `User` that joins to a struct `Book`)
+
+`SELECT a.id, b.id FROM User a JOIN Book b ON (a.book_id = b.id)`
 
 ## Wildcards
 There are two wildcards to select multiple fields. They can neither be filtered nor ordered.

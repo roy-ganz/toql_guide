@@ -150,11 +150,9 @@
 </ul>
 <p>To use a field only for filtering, but not for selection, hide it with a dot: <code>.age gt 50, .book_reviewed eq 1</code></p>
 <a class="header" href="#example" id="example"><h4>Example</h4></a>
-<pre><code>id, book_published eq 1, .age gt 50
-</code></pre>
+<p><code>id, book_published eq 1, .age gt 50</code></p>
 <p>is typically translated into (using canonical aliases)</p>
-<pre><code>SELECT user.id, user_book.id, user_book.published FROM User user JOIN Book user_book ON (user.book_id = user_book.id) WHERE user_book.published = 1 AND  user.age &gt; 50
-</code></pre>
+<p><code>SELECT user.id, user_book.id, user_book.published FROM User user JOIN Book user_book ON (user.book_id = user_book.id) WHERE user_book.published = 1 AND user.age &gt; 50</code></p>
 <a class="header" href="#filter-operations" id="filter-operations"><h2>Filter operations</h2></a>
 <table><thead><tr><th>Toql</th><th> Operation </th><th> Example </th><th> SQL</th></tr></thead><tbody>
 <tr><td>eq </td><td> <em>equal</em>    </td><td>   age eq 50  </td><td> age = 50</td></tr>
@@ -177,17 +175,13 @@
 <p>To build complex filter expressions join filters by comma to express logical AND or semicolon for logical OR.
 Keep in mind that logical AND has higher precendence than logical OR.</p>
 <p>Use parens if required:</p>
-<pre><code class="language-toql">age eq 12, animal eq 'chicken'; animal eq 'cow
-</code></pre>
+<p><code>age eq 12, animal eq 'chicken'; animal eq 'cow</code></p>
 <p>is the same as</p>
-<pre><code class="language-toql">(age eq 12, animal eq 'chicken'); animal eq 'cow
-</code></pre>
+<p><code>(age eq 12, animal eq 'chicken'); animal eq 'cow</code></p>
 <p>but different than</p>
-<pre><code class="language-toql">age eq 12, (animal eq 'chicken'; animal eq 'cow)
-</code></pre>
+<p><code>age eq 12, (animal eq 'chicken'; animal eq 'cow)</code></p>
 <p>Use the dot notation if you only want to filter a field without selecting it:</p>
-<pre><code class="language-toql">age eq 12, .animal eq 'chicken'; .animal eq 'cow'
-</code></pre>
+<p><code>age eq 12, .animal eq 'chicken'; .animal eq 'cow'</code></p>
 <a class="header" href="#argument-types" id="argument-types"><h2>Argument types</h2></a>
 <p>Toql onyl knows integers, floats and strings. Use the following table to express more types:</p>
 <table><thead><tr><th>Type</th><th> Toql Example </th><th>Remark</th></tr></thead><tbody>

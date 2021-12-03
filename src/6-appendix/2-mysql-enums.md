@@ -26,11 +26,21 @@ use strum_macros::{Display, EnumString};
 ```
 Now _Mood_ can be used:
 
-```
-#[derive (Debug, Toql)]
+```rust
+use toql::prelude::Toql;
+use mysql_enum::MysqlEnum;
+use strum_macros::{Display, EnumString};
+#[derive(PartialEq, EnumString, Display, MysqlEnum)]
+ enum Mood {
+    Happy,
+    Sad
+} 
+
+#[derive (Toql)]
 struct User {
+    #[toql(key)]
     id : u64,
-    name: Option<string>
+    name: Option<String>,
     mood: Option<Mood>
 }
 ```

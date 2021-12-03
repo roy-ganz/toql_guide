@@ -151,21 +151,27 @@
 <p>This means that keys are preselected and therefore always loaded
 when a Toql query selects fields from the struct.</p>
 <a class="header" href="#example" id="example"><h4>Example:</h4></a>
-<pre><code class="language-struct">#[derive(Toql)]
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+use toql::prelude::Toql;
+
+#[derive(Toql)]
 struct User {
   #[toql(key)]
-    id: u64
+    id: u64,
     name: Option&lt;String&gt;
 }
-</code></pre>
+#}</code></pre></pre>
 <a class="header" href="#joins" id="joins"><h2>Joins</h2></a>
 <p><em>Inner</em> joins can also have the <code>key</code> attribute. This is useful for association tables.</p>
 <p>For a join used as a key the SQL builder takes the primary key of the joined struct to guess the foreign key columns.</p>
 <a class="header" href="#example-1" id="example-1"><h4>Example:</h4></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
-
 #fn main() {
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 struct Language {
 
@@ -179,10 +185,10 @@ struct Language {
 struct UserLanguage {
 
   #[toql(key)] 
-  user_id: u64
+  user_id: u64,
 
-  #[toql(join(), key)]  
-  language: Language; 
+  #[toql(join, key)]  
+  language: Language 
 }
 #}</code></pre></pre>
 <p>For the example above Toql assumes that the database table <code>UserLanguage</code>  has a composite key made up of the two columns <code>user_id</code> and <code>language_code</code>. You can change this assumption, see <a href="4-derive/4-joins.html">here</a>.</p>
@@ -198,11 +204,26 @@ struct UserLanguage {
 This allows web clients to send either a full entity or just the key of it,
 if they want to update some dependency.</p>
 <a class="header" href="#example-2" id="example-2"><h4>Example</h4></a>
-<pre><code>use crate::user::{User, UserKey};
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+#   use toql::prelude::{ToqlApi,Cache, query, ContextBuilder};
+#   use toql::mock_db::MockDb;
+  use toql::prelude::Toql;
+
+   #[derive(Toql)]
+   struct User {
+     #[toql(key)]
+        id: u64,
+        name: Option&lt;String&gt;
+   }
+
+#   let cache = Cache::new();
+#   let mut toql = MockDb::from(&amp;cache);
 
 let key = UserKey::from(10);
-toql.delete_one(key).await?; // Convert 
-</code></pre>
+toql.delete_one(key).await.unwrap();
+# }
+</code></pre></pre>
 <a class="header" href="#unkeyable-fields" id="unkeyable-fields"><h2>Unkeyable fields</h2></a>
 <p>Only columns and inner joins can be used as keys. Merged fields (<code>Vec&lt;T&gt;</code>) and fields that map to an Sql expression (<code>#[toql(sql=&quot;..&quot;)</code>) cannot be used as keys.</p>
 

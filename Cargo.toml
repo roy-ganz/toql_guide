@@ -4,16 +4,17 @@ version = "0.4.0"
 authors = ["Roy Ganz <roy.ganz@glanis.biz>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-tokio = {version = "1", features=["macros"]}
-
 [dev-dependencies]
-toql = {git="https://github.com/roy-ganz/toql.git"}
+toql = {git="https://github.com/roy-ganz/toql.git", features= ["serde"]}
 toql_mysql_async = {git="https://github.com/roy-ganz/toql_mysql_async.git"}
-
+mysql_enum = "0.1"
+strum = "0.22"
+strum_macros = "0.22"
+serde = {version = "1",  features = ["derive"] }
+tokio = {version = "1", features=["macros"]}
 
 [patch.'https://github.com/roy-ganz/toql.git']
 toql= {path="../toql"}
 
+[patch.crates-io]
+mysql_enum = { path = "../mysql_enum"}

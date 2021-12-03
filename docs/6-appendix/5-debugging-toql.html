@@ -145,14 +145,7 @@
 <p>To debug Toql generated code, follow these steps:</p>
 <ol>
 <li>If you have a lot of modules move the affected <code>mod</code> at the end of the mod list. (So generated code will appear in the terminal last).</li>
-<li>Run <code>cargo</code> with the logger enabled and a single job:</li>
-</ol>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
- RUST_LOG=DEBUG cargo check --jobs=1
-#}</code></pre></pre>
-<ol start="3">
+<li>Run <code>cargo</code> with the logger enabled and a single job: <code>RUST_LOG=DEBUG cargo check --jobs=1</code></li>
 <li>Copy all the logged code from the derived struct and paste it into the source file.</li>
 <li>Remove the log headers by regex replacing <code>\[2.*</code> with an empty string. There should be 13 occurences.</li>
 <li>Copy your derived struct.</li>

@@ -164,13 +164,26 @@ enum Mood {
 } 
 </code></pre>
 <p>Now <em>Mood</em> can be used:</p>
-<pre><code>#[derive (Debug, Toql)]
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+use toql::prelude::Toql;
+use mysql_enum::MysqlEnum;
+use strum_macros::{Display, EnumString};
+#[derive(PartialEq, EnumString, Display, MysqlEnum)]
+ enum Mood {
+    Happy,
+    Sad
+} 
+
+#[derive (Toql)]
 struct User {
+    #[toql(key)]
     id : u64,
-    name: Option&lt;string&gt;
+    name: Option&lt;String&gt;,
     mood: Option&lt;Mood&gt;
 }
-</code></pre>
+#}</code></pre></pre>
 
                     </main>
 

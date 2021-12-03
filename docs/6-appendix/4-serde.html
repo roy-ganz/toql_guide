@@ -143,17 +143,36 @@
                         <a class="header" href="#serde" id="serde"><h1>Serde</h1></a>
 <p>Toql structs usually have a lot of <code>Option</code> types to make fields selectable with a query.
 Let's look how to attribute them with serde for smooth interaction.</p>
+<p>This requires the feature <code>serde</code> for Toql:</p>
+<pre><code class="language-toml">[dependencies]
+toql = {version = &quot;0.4&quot;, features=[&quot;serde&quot;]}
+</code></pre>
 <a class="header" href="#serializing" id="serializing"><h2>Serializing</h2></a>
 <p>It's nice to omit unselected fields. This can easily achieved with <code>#[serde(skip_serializing_if = &quot;Option::is_none&quot;)]</code></p>
 <a class="header" href="#serialize-example" id="serialize-example"><h3>Serialize example</h3></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-    #[serde(skip_serializing_if = &quot;Option::is_none&quot;)]
-    age: Option&lt;u8&gt;
+    use toql::prelude::{Toql, Join};
+    use serde::Serialize;
+#   #[derive(Toql, Serialize)]
+#   struct Address {
+#       #[toql(key)]
+#       id: u64
+#   }
+
+#[derive(Toql, Serialize)]
+struct User {
+    #[toql(key)]
+    id: u64,
 
     #[serde(skip_serializing_if = &quot;Option::is_none&quot;)]
+    age: Option&lt;u8&gt;,
+    
+    #[serde(skip_serializing_if = &quot;Option::is_none&quot;)]
+    #[toql(join)]
     address: Option&lt;Option&lt;Join&lt;Address&gt;&gt;&gt; // Selectable left join
+}
 #}</code></pre></pre>
 <a class="header" href="#deserializing" id="deserializing"><h2>Deserializing</h2></a>
 <p>Your server needs deserializing either</p>
@@ -162,9 +181,7 @@ Let's look how to attribute them with serde for smooth interaction.</p>
 <li>or when updating an existing item</li>
 </ul>
 <a class="header" href="#deserialize-example" id="deserialize-example"><h3>Deserialize example:</h3></a>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
+<pre><code class="language-rust ignore">    use toql::prelude::Toql;
     #[derive(Toql)]
     #[toql(auto_key)]
     struct User {
@@ -188,7 +205,7 @@ Let's look how to attribute them with serde for smooth interaction.</p>
         #[serde(default, deserialize_with=&quot;des_double_option&quot;)]
         address: Option&lt;Option&lt;Join&lt;Address&gt;&gt;&gt; 
     }
-#}</code></pre></pre>
+</code></pre>
 <p>Notice the double <code>Option</code> on the selectable left join <code>address</code>.
 When deserializing from JSON the following mapping works:</p>
 <table><thead><tr><th>JSON </th><th> Rust</th></tr></thead><tbody>
@@ -197,10 +214,7 @@ When deserializing from JSON the following mapping works:</p>
 <tr><td> value </td><td> Some(Some(value))</td></tr>
 </tbody></table>
 <p>To make this happen you need a custom deserialization function:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-use serde::{Deserializer, Deserialze};
+<pre><code class="language-rust ignore">use serde::{Deserializer, Deserialze};
 
 pub fn des_double_option&lt;'de, T, D&gt;(de: D) -&gt; Result&lt;Option&lt;Option&lt;T&gt;&gt;, D::Error&gt;
 where
@@ -209,7 +223,7 @@ where
 {
     Deserialize::deserialize(de).map(Some)
 }
-#}</code></pre></pre>
+</code></pre>
 <p>Now you get the following:</p>
 <ul>
 <li>If you omit address in your JSON <code>#[serde(default)]</code> kicks in and you get <code>None</code>.</li>

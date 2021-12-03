@@ -146,28 +146,30 @@ A Toql query can then select the selection instead of all the individual fields.
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+ 
 #[derive(Toql)]
 #[toql(selection(name=&quot;std&quot;, fields=&quot;*, address_street&quot;))]
 #[toql(selection(name=&quot;tiny&quot;, fields=&quot;id, name&quot;))]
 struct User {
 
  #[toql(key)]
- id: u64
+ id: u64,
 
- name: String
+ name: String,
 
- #[toql(join())]
+ #[toql(join)]
  address: Address
-
 }
-
-[derive(Toql)]
+ 
+#[derive(Toql)]
 struct Address {
 
  #[toql(key)]
- id: u64
+ id: u64,
 
  street: String
+}
 #}</code></pre></pre>
 <p>Notice that selection names with 3 letters or less are internally reserved and my have special meanings.
 They can't be defined except <code>std</code> and <code>cnt</code>.</p>

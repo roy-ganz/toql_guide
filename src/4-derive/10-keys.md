@@ -11,11 +11,13 @@ This means that keys are preselected and therefore always loaded
 when a Toql query selects fields from the struct.
 
 #### Example:
-```struct
+```rust
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 struct User {
   #[toql(key)]
-	id: u64
+	id: u64,
 	name: Option<String>
 }
 ```
@@ -28,6 +30,7 @@ For a join used as a key the SQL builder takes the primary key of the joined str
 
 #### Example:
 ```rust
+use toql::prelude::Toql;
 
 #[derive(Toql)]
 struct Language {
@@ -42,10 +45,10 @@ struct Language {
 struct UserLanguage {
 
   #[toql(key)] 
-  user_id: u64
+  user_id: u64,
 
-  #[toql(join(), key)]  
-  language: Language; 
+  #[toql(join, key)]  
+  language: Language 
 }
 ```
 For the example above Toql assumes that the database table `UserLanguage`  has a composite key made up of the two columns `user_id` and `language_code`. You can change this assumption, see [here](4-derive/4-joins.md).
@@ -66,11 +69,26 @@ if they want to update some dependency.
 
 
 #### Example
-```
-use crate::user::{User, UserKey};
+```rust
+#   #[tokio::main(flavor="current_thread")]
+#   async fn main() {
+#   use toql::prelude::{ToqlApi,Cache, query, ContextBuilder};
+#   use toql::mock_db::MockDb;
+  use toql::prelude::Toql;
+
+   #[derive(Toql)]
+   struct User {
+     #[toql(key)]
+	    id: u64,
+	    name: Option<String>
+   }
+
+#   let cache = Cache::new();
+#   let mut toql = MockDb::from(&cache);
 
 let key = UserKey::from(10);
-toql.delete_one(key).await?; // Convert 
+toql.delete_one(key).await.unwrap();
+# }
 ```
 
 ## Unkeyable fields

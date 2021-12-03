@@ -145,6 +145,8 @@
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct User {
@@ -152,7 +154,7 @@ struct User {
     #[toql(key)]
      id: u32,
 
-     name: Option&lt;String&gt;
+     name: Option&lt;String&gt;,
 
      #[toql(merge())]  
      mobile_phones : Vec&lt;Phone&gt;
@@ -162,7 +164,7 @@ struct User {
 struct Phone {
 
     #[toql(key)]
-    number: Option&lt;String&gt;
+    number: u64,
 
     prepaid : Option&lt;bool&gt;
 }
@@ -170,12 +172,9 @@ struct Phone {
 <p>Selecting all fields from above with <code>*, mobilePhones_*</code> will run 2 SELECT statements and merge the resulting <code>Vec&lt;Phone&gt;</code> into <code>Vec&lt;User&gt;</code> by the common value of <code>User.id</code> and <code>Phone.user_id</code>.</p>
 <a class="header" href="#renaming-merge-columns" id="renaming-merge-columns"><h2>Renaming merge columns</h2></a>
 <p>By default the merge column names follow the pattern above. However it's possible to explicitly specify the column names:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-#[toql(merge(columns(self=&quot;id&quot;, other=&quot;user_id&quot;)))]  
+<pre><code class="language-rust ignore">#[toql(merge(columns(self=&quot;id&quot;, other=&quot;user_id&quot;)))]  
 phones : Vec&lt;Phone&gt;
-#}</code></pre></pre>
+</code></pre>
 <a class="header" href="#no-association-table-with-join_sql" id="no-association-table-with-join_sql"><h2>No association table with <code>join_sql</code></h2></a>
 <p>Often in a 1-n-1 situation the association table (n) does not contain any other columns apart
 from the composite key. In those situations it's often desirable to skip it.</p>
@@ -183,6 +182,8 @@ from the composite key. In those situations it's often desirable to skip it.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct User {
@@ -190,10 +191,10 @@ struct User {
     #[toql(key)]
     id: u32,
 
-    name: Option&lt;String&gt;
+    name: Option&lt;String&gt;,
 
-    #[toql(merge()))] // Default merging on User.id = UserCountry.user_id
-    countries1 : Vec&lt;UserCountry&gt;
+    #[toql(merge)] // Default merging on User.id = UserCountry.user_id
+    countries1 : Vec&lt;UserCountry&gt;,
 
      #[toql(merge(
         join_sql = &quot;JOIN UserCountry uc ON (...id = uc.country_id)&quot;,
@@ -208,7 +209,7 @@ struct UserCountry {
     #[toql(key)]
      user_id: u32,
 
-    #[toql(key, join())] // Default joining on UserCountry.country_id = Country.id
+    #[toql(key, join)] // Default joining on UserCountry.country_id = Country.id
      country: Country
      
 }
@@ -252,14 +253,16 @@ But since it's not, we have to mark it with <code>#[foreign_key]</code>. This te
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct User {
     #[toql(key)]
     id: u64,
 
-    #[toql(merge())]
-    todos: Vec&lt;UserTodo&gt;
+    #[toql(merge)]
+    todos: Vec&lt;Todo&gt;
 }
 
 
@@ -270,7 +273,7 @@ struct Todo {
     id: u64,
 
     #[toql(foreign_key)]
-    user_id: ,
+    user_id: u64,
     
     what: String
 }

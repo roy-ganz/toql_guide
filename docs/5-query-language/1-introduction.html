@@ -145,17 +145,11 @@
 <p>Besides selection, query fields can also be filtered and ordered.</p>
 <p>They are separated either by comma or semicolon. If a filter is applied a comma will join the filters with AND, a semicolon with OR.</p>
 <a class="header" href="#example-1" id="example-1"><h4>Example 1:</h4></a>
-<pre><code>id, +name, age gt 18
-</code></pre>
-<p>is translated into</p>
-<pre><code>SELECT t0.id, t0.name, t0.age FROM ... WHERE t0.age &gt; 18 ORDER BY t0.name ASC
-</code></pre>
+<p><code>id, +name, age gt 18</code>
+is translated into
+<code>SELECT t1.id, t1.name, t1.age FROM ... t1 WHERE t1.age &gt; 18 ORDER BY t1.name ASC</code></p>
 <a class="header" href="#example-2" id="example-2"><h4>Example 2:</h4></a>
-<pre><code>id, .age eq 12; .age eq 15
-</code></pre>
-<p>is translated into</p>
-<pre><code>SELECT t0.id From ... WHERE t0.age = 12 OR t0.age = 15
-</code></pre>
+<p>id, .age eq 12; .age eq 15<code>is translated into</code>SELECT t1.id From ... t1 WHERE t1.age = 12 OR t1.age = 15`</p>
 
                     </main>
 

@@ -11,11 +11,11 @@ Fields can be filtered by adding a filter to the field name.
 To use a field only for filtering, but not for selection, hide it with a dot: `.age gt 50, .book_reviewed eq 1`
 
 #### Example
-    id, book_published eq 1, .age gt 50
+`id, book_published eq 1, .age gt 50`
  
  is typically translated into (using canonical aliases)
  
-    SELECT user.id, user_book.id, user_book.published FROM User user JOIN Book user_book ON (user.book_id = user_book.id) WHERE user_book.published = 1 AND  user.age > 50
+`SELECT user.id, user_book.id, user_book.published FROM User user JOIN Book user_book ON (user.book_id = user_book.id) WHERE user_book.published = 1 AND  user.age > 50`
 
 
 
@@ -51,27 +51,19 @@ Keep in mind that logical AND has higher precendence than logical OR.
 
 Use parens if required:
 
-```toql 
-age eq 12, animal eq 'chicken'; animal eq 'cow
-```
+`age eq 12, animal eq 'chicken'; animal eq 'cow`
 
 is the same as
 
-```toql 
-(age eq 12, animal eq 'chicken'); animal eq 'cow
-```
+`(age eq 12, animal eq 'chicken'); animal eq 'cow`
 
 but different than
 
-```toql 
-age eq 12, (animal eq 'chicken'; animal eq 'cow)
-```
+`age eq 12, (animal eq 'chicken'; animal eq 'cow)`
 
 Use the dot notation if you only want to filter a field without selecting it:
 
-```toql 
-age eq 12, .animal eq 'chicken'; .animal eq 'cow'
-``` 
+`age eq 12, .animal eq 'chicken'; .animal eq 'cow'` 
 
 ## Argument types
 Toql onyl knows integers, floats and strings. Use the following table to express more types:

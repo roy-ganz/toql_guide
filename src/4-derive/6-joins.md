@@ -168,7 +168,7 @@ This allows some nifty joining, see here:
 		
 		pub title: String,
 	}
-	 let cache = Cache::new();
+	let cache = Cache::new();
     let mut toql = MockDb::from(&cache);
 
     let q = query!(Country, "@language 'fr'");

@@ -10,14 +10,31 @@ The update functions from the API will update a field,
 If we want to update all fields of the struct below with a field list of `*`, the behaviour would be
 
 ```rust
+use toql::prelude::Toql;
+
+#   #[derive(Toql)]
+#   struct Phone {
+#   
+#   	#[toql(key)]
+#   	number: String,
+#   	prepaid : Option<bool>
+#   }
+#
+#   #[derive(Toql)]
+#   struct Address {
+#   	#[toql(key)]
+#   	id: u64,
+#   	street: Option<String>
+#   }
+
 #[derive(Toql)]
 struct User {
 	#[toql(key)]
-	id: u64			// Keys are never updated	
+	id: u64,			// Keys are never updated	
 
 	username: String,		// Update
 	realname: Option<String>, 	// Updated , if Some
-	address: Option<Option<<String>>, // Update NULL or String, if Some
+	address: Option<Option<String>>, // Update NULL or String, if Some
 
 	#[toql(preselect)]
 	info: Option<String>, 	//Update NULL or String
@@ -32,13 +49,13 @@ struct User {
 	address3: Address, 		// Update foreign_key
 
 	#[toql(join(), preselect)]
-	address4: Option<Address>>,	// Update foreign_key or NULL
+	address4: Option<Address>,	// Update foreign_key or NULL
 
 	#[toql(merge())]
-	phones1: Vec<Phone>>,	// No effect for *
+	phones1: Vec<Phone>,	// No effect for *
 
 	#[toql(merge())]
-	phones2: Option<Vec<Phone>>> // No effect for *, 
+	phones2: Option<Vec<Phone>> // No effect for *, 
 }
 ```
 

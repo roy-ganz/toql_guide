@@ -6,20 +6,24 @@ Let's write a handler that concatenates all argument passed to the predicate and
 
 
 ```rust
+use toql::prelude::{Toql,PredicateHandler, SqlExpr, SqlArg,
+        ParameterMap, SqlBuilderError, Resolver};
+use std::collections::HashMap;
+
 #[derive(Toql)]
 #[toql(predicate(name="names", 
 				 sql="EXISTS (Select 1 FROM User u JOIN Todo t ON (u.id = t.user_id) \
 				AND u.name IN <args>)", handler="my_handler"))]
 struct Todo {
 
- #[toql(key)]
- id: u64,
+    #[toql(key)]
+    id: u64,
 
- what: String,
+    what: String,
 }
 
 
-use toql::prelude::{PredicateHandler, SqlExpr, SqlArg, ParameterMap, SqlBuilderError};
+
 
 pub(crate) struct MyPredicateHandler;
 impl PredicateHandler for MyPredicateHandler {

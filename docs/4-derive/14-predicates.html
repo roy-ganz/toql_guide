@@ -147,13 +147,13 @@ However sometimes you may have a completely different filter criteria that can't
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
 #[derive(Toql)]
-#[toql(predicate(name=&quot;search&quot;, 
-        sql=&quot;MATCH (..firstname, ..lastname) AGAINST (?  IN BOOLEAN MODE)&quot;))]
-
-#[toql(predicate(name=&quot;street&quot;, 
-        sql=&quot;EXISTS( SELECT 1 FROM User u JOIN Address a ON (u.address_id = a.id) \
-            WHERE a.street = ? AND u.id = ..id)&quot;))]
+#[toql(predicate(name = &quot;search&quot;, 
+            sql = &quot;MATCH (..firstname, ..lastname) AGAINST (?  IN BOOLEAN MODE)&quot;),
+      predicate(name = &quot;street&quot;, 
+            sql = &quot;EXISTS( SELECT 1 FROM User u JOIN Address a ON (u.address_id = a.id) \
+                  WHERE a.street = ? AND u.id = ..id)&quot;))]
 struct User {
 
  #[toql(key)]
@@ -169,7 +169,7 @@ and retrieve all users from a certain street with <code>@street 'elmstreet'</cod
 If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="7-joins.html">on aux param</a>.</p>
 <a class="header" href="#reference" id="reference"><h2>Reference</h2></a>
 <p>The full predicate syntax is
-<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param(name&quot;..&quot;, index = .), count_filter=true|false)</code>
+<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param(name&quot;..&quot;, index = .), count_filter</code>
 where</p>
 <ul>
 <li><strong>name</strong> is the name of the predicate. It can be called in a Toql query with <code>@name ..</code>.
@@ -181,8 +181,7 @@ If a predicate is defined on a joined struct, that predicate can be called with 
 Provide a function name without parenthesis that return a struct that implement <code>toql::prelude::PredicateHandler</code></li>
 <li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building custom joins.
 and can only be used when the predicate takes exactly one argument. See <a href="7-join.html">example</a>.</li>
-<li><strong>count_filter</strong> determines if a predicate used in Toql query should also be used for <a href="3-api/2-load.html">count queries</a>.
-Default is <code>false</code>.</li>
+<li><strong>count_filter</strong> determines that a predicate used in Toql query is also be used for <a href="3-api/2-load.html">count queries</a>.</li>
 </ul>
 
                     </main>

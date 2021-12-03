@@ -4,6 +4,8 @@
 A struct can contain a `Vec` of other structs. Because this can't be loaded directly in SQL, Toql will execute multiple queries and merge the results. 
 
 ```rust
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct User {
@@ -11,7 +13,7 @@ struct User {
 	#[toql(key)]
 	 id: u32,
 
-	 name: Option<String>
+	 name: Option<String>,
 
 	 #[toql(merge())]  
 	 mobile_phones : Vec<Phone>
@@ -21,7 +23,7 @@ struct User {
 struct Phone {
 
 	#[toql(key)]
-	number: Option<String>
+	number: u64,
 
 	prepaid : Option<bool>
 }
@@ -32,7 +34,7 @@ Selecting all fields from above with `*, mobilePhones_*` will run 2 SELECT state
 ## Renaming merge columns
 By default the merge column names follow the pattern above. However it's possible to explicitly specify the column names:
 
-```rust
+```rust, ignore
 #[toql(merge(columns(self="id", other="user_id")))]  
 phones : Vec<Phone>
 ```
@@ -46,6 +48,8 @@ from the composite key. In those situations it's often desirable to skip it.
 Let's go with an example:
 
 ```rust
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct User {
@@ -53,10 +57,10 @@ struct User {
 	#[toql(key)]
 	id: u32,
 
-	name: Option<String>
+	name: Option<String>,
 
-	#[toql(merge()))] // Default merging on User.id = UserCountry.user_id
-	countries1 : Vec<UserCountry>
+	#[toql(merge)] // Default merging on User.id = UserCountry.user_id
+	countries1 : Vec<UserCountry>,
 
 	 #[toql(merge(
         join_sql = "JOIN UserCountry uc ON (...id = uc.country_id)",
@@ -71,7 +75,7 @@ struct UserCountry {
 	#[toql(key)]
 	 user_id: u32,
 
-	#[toql(key, join())] // Default joining on UserCountry.country_id = Country.id
+	#[toql(key, join)] // Default joining on UserCountry.country_id = Country.id
 	 country: Country
 	 
 }
@@ -117,14 +121,16 @@ But since it's not, we have to mark it with `#[foreign_key]`. This tells to cons
 
 
 ```rust
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct User {
 	#[toql(key)]
 	id: u64,
 
-	#[toql(merge())]
-	todos: Vec<UserTodo>
+	#[toql(merge)]
+	todos: Vec<Todo>
 }
 
 
@@ -135,7 +141,7 @@ struct Todo {
 	id: u64,
 
 	#[toql(foreign_key)]
-	user_id: ,
+	user_id: u64,
 	
 	what: String
 }

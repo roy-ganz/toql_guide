@@ -3,12 +3,14 @@
 It's possible to restrict access to fields and structs with boolean role expressions.
 
 ```rust
-#[derive(Toql)] {
-#[toql(roles(insert="poweruser", delete="poweruser"))
-struct Book
+use toql::prelude::Toql;
+
+#[derive(Toql)]
+#[toql(roles(insert="poweruser", delete="poweruser"))]
+struct Book {
 
 	#[toql(key)]
-	id : u64
+	id : u64,
 
 	#[toql(roles(load="superuser;poweruser", update="poweruser"))]
 	rating: u64
@@ -23,9 +25,13 @@ The role expressions are similar to the Toql query syntax:
 An valid role expression would be `(teacher;student), !lazy` meaning `A teacher OR student AND NOT lazy`.
 
 Roles are provided with the context:
-```
+```rust
+use toql::prelude::ContextBuilder;
+use std::collections::HashSet;
+
 let mut r = HashSet::new();
-r.insert("teacher");
+r.insert("teacher".to_string());
+
 let context = ContextBuilder::new()
 		.with_roles(r)
 		.build();
@@ -41,19 +47,33 @@ It's possible to restrict loading, filtering and ordering of a struct or individ
 Let's assume a `struct Book`:
 
 ```rust
+use toql::prelude::{Toql, Join};
+#   #[derive(Toql)]
+#   #[toql(auto_key)]
+#   struct User {
+#   	#[toql(key)]
+#   	 id: u32,
+#   }
+#   
+#   #[derive(Toql)]
+#   struct Edition {
+#   	#[toql(key)]
+#   	id: u64,
+#   }
+
 #[derive(Toql)]
 #[toql(roles(load ="book_role"))]
 struct Book {
 	#[toql(key)]
-	id : u64
+	id : u64,
 
 	#[toql(roles(load="author_role"))]
-	title Option<String>>,
+	title: Option<String>,
 
-	#[toql(roles(load="author_role"))]
+	#[toql(join, roles(load="author_role"))]
 	author: Option<Join<User>>,
 
-	#[toql(roles(load="edition_role"))]
+	#[toql(merge, roles(load="edition_role"))]
 	editions: Option<Vec<Edition>>,
 }
 ```
@@ -65,14 +85,16 @@ So to load the book's title the user requires the roles `book_role` and `author_
 Notice that restricting preselected fields is like restricting the entire struct. See here:
 
 ```rust
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(roles(load ="book_role"))]
 struct Book {
 	#[toql(key)]
-	id : u64
+	id : u64,
 
 	#[toql(roles(load="author_role"))]
-	title String
+	title: String
 }
 ```
 Here Toql needs to load the title field in order to deserialize the struct. Because `title` is role restricted an error is raised for a missing `autor_role`.
@@ -85,20 +107,34 @@ If all fields from `Book` are selected with a wildcard `*` fields that do not ma
 To restrict updating a struct or individual fields:
 
 ```rust
-#[derive(Toql)] {
-#[toql(roles(update="book_role"))
-struct Book
+use toql::prelude::{Toql, Join};
+#   #[derive(Toql)]
+#   #[toql(auto_key)]
+#   struct User {
+#   	#[toql(key)]
+#   	 id: u32,
+#   }
+#   
+#   #[derive(Toql)]
+#   struct Edition {
+#   	#[toql(key)]
+#   	id: u64,
+#   }
+
+#[derive(Toql)]
+#[toql(roles(update="book_role"))]
+struct Book {
 
 	#[toql(key)]
-	id : u64
+	id : u64,
 
 	#[toql(roles(update="author_role"))]
-	title Option<String>>,
+	title: Option<String>,
 
-	#[toql(roles(update="author_role"))]
+	#[toql(join, roles(update="author_role"))]
 	author: Option<Join<User>>,
 
-	#[toql(roles(update="edition_role"))]
+	#[toql(merge, roles(update="edition_role"))]
 	editions: Option<Vec<Edition>>,
 }
 ```
@@ -123,16 +159,22 @@ Fields that have an invalid role expression are skipped for the field list `*`. 
  ## Insert / Delete
 To restrict insertion or deltetion of a struct, attribute the struct like so:
 
-```rust
+```rust, ignore
+use toql::prelude::{Toql, Join};
+
 #[derive(Toql)] {
 #[toql(roles(insert="book_role", delete="book_role"))
-struct Book
+struct Book {
 
 	#[toql(key)]
 	id : u64
 
 	title Option<String>>,
+
+	#[toql(join)]
 	author: Option<Join<User>>,
+
+	#[toql(merge)]
 	editions: Option<Vec<Edition>>,
 }
 ```

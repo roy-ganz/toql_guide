@@ -151,13 +151,14 @@ This is done because</p>
 <p>Partial tables are supported with joins.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
-
 #fn main() {
+use toql::prelude::Toql;
+
 #[derive(Toql)]
 #[toql(auto_key)]
 struct Question {
     #[toql(key)]
-    id: u64
+    id: u64,
 
     text: String,
 
@@ -168,7 +169,7 @@ struct Question {
 #[derive(Toql)]
 struct QuestionDetails {
     #[toql(key)]
-    question_id: u64
+    question_id: u64,
     
     font: String
 }

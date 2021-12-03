@@ -151,14 +151,31 @@
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+
+#   #[derive(Toql)]
+#   struct Phone {
+#   
+#   	#[toql(key)]
+#   	number: String,
+#   	prepaid : Option&lt;bool&gt;
+#   }
+#
+#   #[derive(Toql)]
+#   struct Address {
+#   	#[toql(key)]
+#   	id: u64,
+#   	street: Option&lt;String&gt;
+#   }
+
 #[derive(Toql)]
 struct User {
     #[toql(key)]
-    id: u64			// Keys are never updated	
+    id: u64,			// Keys are never updated	
 
     username: String,		// Update
     realname: Option&lt;String&gt;, 	// Updated , if Some
-    address: Option&lt;Option&lt;&lt;String&gt;&gt;, // Update NULL or String, if Some
+    address: Option&lt;Option&lt;String&gt;&gt;, // Update NULL or String, if Some
 
     #[toql(preselect)]
     info: Option&lt;String&gt;, 	//Update NULL or String
@@ -173,13 +190,13 @@ struct User {
     address3: Address, 		// Update foreign_key
 
     #[toql(join(), preselect)]
-    address4: Option&lt;Address&gt;&gt;,	// Update foreign_key or NULL
+    address4: Option&lt;Address&gt;,	// Update foreign_key or NULL
 
     #[toql(merge())]
-    phones1: Vec&lt;Phone&gt;&gt;,	// No effect for *
+    phones1: Vec&lt;Phone&gt;,	// No effect for *
 
     #[toql(merge())]
-    phones2: Option&lt;Vec&lt;Phone&gt;&gt;&gt; // No effect for *, 
+    phones2: Option&lt;Vec&lt;Phone&gt;&gt; // No effect for *, 
 }
 #}</code></pre></pre>
 <p>Notice that foreign keys of joins are included (<em>User.address1_id, User.address2_id, ..</em>) with the <code>*</code> in the field list.

@@ -17,10 +17,10 @@ pub(crate) struct MyJoinHandler;
 
 impl JoinHandler for MyJoinHandler {
     fn build_on_predicate(&self, on_predicate: SqlExpr, aux_params: &ParameterMap,)
-     ->Result<Option<SqlExpr>, SqlBuilderError> {
-     
-      Some(on_expr) 
-     }
+     ->Result<SqlExpr, SqlBuilderError> {
+        // Modify on_predicate based on aux_params
+        Ok(on_predicate)
+    }
 }
 
 // Getter function
@@ -31,7 +31,7 @@ pub fn my_join_handler() -> impl JoinHandler {
 
 Now map the getter function with
 
-```rust
+```rust, ignore
 #[toql(join(), handler="my_join_handler")]
 address: Address
 ```

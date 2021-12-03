@@ -4,9 +4,7 @@ A typical query selects a lot of fields. Instead of writing out a long list of f
 
 The list can then be selected with a `$` followed by the selection name.
 
-```toql 
-$mySelection, $otherSelection
-```
+`$mySelection, $otherSelection`
 
 There is a set of predefined selections:
 
@@ -22,9 +20,7 @@ Selections on a dependency can be used with a path.
 
 To load the standart selection from a dependency `address` use
 
-```toql 
-$address_std
-```
+`$address_std`
 
 ### Restriction on selection names
 Selection names with 3 or less characters are reserved for internal purposes. 

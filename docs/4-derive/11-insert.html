@@ -141,7 +141,7 @@
                 <div id="content" class="content">
                     <main>
                         <a class="header" href="#insert" id="insert"><h1>Insert</h1></a>
-<p>When you insert a struct, all fields, including foreign keys of joins,  will be inserted.</p>
+<p>When you insert a struct, all fields, including foreign keys of joins, will be inserted.</p>
 <p>Check <a href="../3-api/4-insert.html">the api</a> for details.</p>
 <a class="header" href="#default-values" id="default-values"><h2>Default values</h2></a>
 <p>For <em>selectable</em> fields in a struct that are <code>None</code> Toql will insert the default value for the corresponding table column.
@@ -152,35 +152,51 @@ This can be done through prior validation.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
+use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct Phone {
+#   
+#   	#[toql(key)]
+#   	number: String,
+#   	prepaid : Option&lt;bool&gt;
+#   }
+#   
+#   #[derive(Toql)]
+#   struct Address {
+#   	#[toql(key)]
+#   	id: u64,
+#   	street: Option&lt;String&gt;
+#   }
+  
 #[derive(Toql)]
 struct User {
     #[toql(key)]
-    id: u64                     // Keys are never inserted
+    id: u64,                     // Keys are never inserted
     
     username: String,		// Value
     realname: Option&lt;String&gt;,	// Default or value
-    address: Option&lt;Option&lt;&lt;String&gt;&gt;,// Nullable column: Default, value or NULL
+    address: Option&lt;Option&lt;String&gt;&gt;,// Nullable column: Default, value or NULL
 
     #[toql(preselect)]
-    info: Option&lt;String&gt; 	// Nullable column: Value or NULL
+    info: Option&lt;String&gt;, 	// Nullable column: Value or NULL
 
     #[toql(join())]
-    address1: Option&lt;Address&gt; 	// Selectable inner Join: Foreign key is inserted or default
+    address1: Option&lt;Address&gt;, 	// Selectable inner Join: Foreign key is inserted or default
 
     #[toql(join())]
-    address2: Option&lt;Option&lt;Address&gt;&gt;// Selectable left join: Default, value or NULL
+    address2: Option&lt;Option&lt;Address&gt;&gt;,// Selectable left join: Default, value or NULL
 
     #[toql(join())]
-    address3: Address 		// Inner Join: Foreign key or default
+    address3: Address, 		// Inner Join: Foreign key or default
 
     #[toql(join(), preselect)]
-    address4: Option&lt;Address&gt;&gt;	// Selectable inner join: Foreign key or default
+    address4: Option&lt;Address&gt;,	// Selectable inner join: Foreign key or default
 
     #[toql(merge())]
-    phones1: Vec&lt;Phone&gt;&gt;		// No change on table 'User'
+    phones1: Vec&lt;Phone&gt;,		// No change on table 'User'
 
     #[toql(merge())]
-    phones2: Option&lt;Vec&lt;Phone&gt;&gt;&gt; // No change on table 'User'
+    phones2: Option&lt;Vec&lt;Phone&gt;&gt; // No change on table 'User'
 }
 #}</code></pre></pre>
 <p>When the path list requires to insert a dependency too,

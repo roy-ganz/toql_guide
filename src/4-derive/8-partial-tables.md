@@ -8,12 +8,13 @@ This is done because
 
 Partial tables are supported with joins.
 ```rust
+use toql::prelude::Toql;
 
 #[derive(Toql)]
 #[toql(auto_key)]
 struct Question {
     #[toql(key)]
-    id: u64
+    id: u64,
 
     text: String,
 
@@ -24,7 +25,7 @@ struct Question {
 #[derive(Toql)]
 struct QuestionDetails {
     #[toql(key)]
-    question_id: u64
+    question_id: u64,
     
     font: String
 }
