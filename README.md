@@ -2,6 +2,8 @@
 
 This is the user guide for [Toql](https://docs.rs/toql/0.4/toql/), an ORM with support for async databases.
 
+The guide is published on a [GitHub Page]( https://roy-ganz.github.io/toql_guide/).
+
 ## Build
 
 This guide uses [mdBook](https://github.com/rust-lang/mdBook).
