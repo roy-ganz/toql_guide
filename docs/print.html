@@ -2739,14 +2739,15 @@ struct User {
     #[toql(auto_key)]
     struct User {
     
-        // 'default' allows missing field 'id' in Json
-        //  Needed typically for insert
+        // Serde `default` allows missing field `id` in Json
+        //  Needed typically for insert and auto key
         #[serde(default)] 
         #[toql(key)]
         id: u64
         
-        // No Serde attribute:
-        // Field must always be present in Json, but may be null -&gt; None
+        // No Serde attribute
+        // Field must always be present in Json, but may be `null` -&gt; `Option::None`
+        // Fields that are `None` wont be updated.
         name: Option&lt;String&gt;
 
         // Never deserialize expressions
@@ -2767,7 +2768,10 @@ When deserializing from JSON the following mapping works:</p>
 <tr><td> value </td><td> Some(Some(value))</td></tr>
 </tbody></table>
 <p>To make this happen you need a custom deserialization function:</p>
-<pre><code class="language-rust ignore">use serde::{Deserializer, Deserialze};
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+use serde::{Deserializer, Deserialize};
 
 pub fn des_double_option&lt;'de, T, D&gt;(de: D) -&gt; Result&lt;Option&lt;Option&lt;T&gt;&gt;, D::Error&gt;
 where
@@ -2776,7 +2780,7 @@ where
 {
     Deserialize::deserialize(de).map(Some)
 }
-</code></pre>
+#}</code></pre></pre>
 <p>Now you get the following:</p>
 <ul>
 <li>If you omit address in your JSON <code>#[serde(default)]</code> kicks in and you get <code>None</code>.</li>
