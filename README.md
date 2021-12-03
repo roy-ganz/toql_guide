@@ -1,6 +1,6 @@
 # Guide for Toql 0.4
 
-This is the user guide for [Toql](https://docs.rs/toql/0.4/toql/), an ORM with support for async databases.
+This is the user guide for [Toql](https://docs.rs/toql/0.4/toql/), an ORM for the Rust programming language.
 
 The guide is published on a [GitHub Page]( https://roy-ganz.github.io/toql_guide/).
 
