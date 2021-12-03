@@ -2,7 +2,7 @@
 authors = ["Roy Ganz <roy.ganz@glanis.biz>"]
 multilingual = false
 src = "src"
-title = "Toql book 0.4"
+title = "Toql Guide 0.4"
 
 [build]
 build-dir= "docs"
