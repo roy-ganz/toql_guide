@@ -3,7 +3,7 @@
 Normal query filters are applied to fields. 
 Predicates overcome this limitation and can filter on any raw SQL predicate.
 
-The behaviour of predicates must be [mapped](../4-derive/10-predicates.md), 
+The behaviour of predicates must be [mapped](../4-derive/14-predicates.md), 
 then they can be called with a `@`, the predicate name and zero or more arguments.
 
 ```toql 

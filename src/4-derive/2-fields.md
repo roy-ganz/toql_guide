@@ -103,17 +103,16 @@ struct Country {
 	name: String,
 }
 
+let cache = Cache::default();
+let mut toql = MockDb::from(&cache);
 
-	let cache = Cache::default();
-    let mut toql = MockDb::from(&cache);
-  
-	let q = query!(UserRef, "id, fullName, country_id"); 
-	let mut users = toql.load_many(&q).await.unwrap(); 
-	assert_eq!(toql.take_unsafe_sql(), 
-			"SELECT user.id, user.full_name, user_country.id, user_country.name \
-				FROM User user \
-				JOIN (Country user_country) \
-				ON (user.country_id = user_country.id)");
+let q = query!(UserRef, "id, fullName, country_id"); 
+let mut users = toql.load_many(&q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), 
+		"SELECT user.id, user.full_name, user_country.id, user_country.name \
+			FROM User user \
+			JOIN (Country user_country) \
+			ON (user.country_id = user_country.id)");
 
 # }
 ```
@@ -124,6 +123,8 @@ Fields can be excluded in several ways
 - `skip_mut` ensures a field is never updated, automatically added for keys and SQL expressions.
 - `skip_wildcard` removes a field from default [wildcard selection](../5-query-language/2-select.md), use for expensive SQL expressions or soft hiding.
 
+Notice that for `skip_wildcard` the field must be selectable (`Option<T>`). 
+Otherwise Toql must always load a value to satisfy the deserializer. 
 
 ```rust
 #   #[tokio::main(flavor="current_thread")]
@@ -141,10 +142,10 @@ struct UserRef {
 	full_name: String,
 
 	#[toql(skip_wildcard)]
-	middle_name: String,
+	middle_name: Option<String>,
 
 	#[toql(skip)]
-	value: String,
+	value: Option<String>,
 
 }
 	let cache = Cache::default();

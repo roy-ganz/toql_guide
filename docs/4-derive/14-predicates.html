@@ -152,8 +152,9 @@ use toql::prelude::Toql;
 #[toql(predicate(name = &quot;search&quot;, 
             sql = &quot;MATCH (..firstname, ..lastname) AGAINST (?  IN BOOLEAN MODE)&quot;),
       predicate(name = &quot;street&quot;, 
-            sql = &quot;EXISTS( SELECT 1 FROM User u JOIN Address a ON (u.address_id = a.id) \
-                  WHERE a.street = ? AND u.id = ..id)&quot;))]
+            sql = &quot;EXISTS( SELECT 1 FROM User u \
+                JOIN Address a ON (u.address_id = a.id) \
+                WHERE a.street = ? AND u.id = ..id)&quot;))]
 struct User {
 
  #[toql(key)]
@@ -166,22 +167,35 @@ struct User {
 <p>With the two predicates above you can seach for users that have a certain name with <code>@search 'peter'</code>
 and retrieve all users from a certain street with <code>@street 'elmstreet'</code>.</p>
 <p>The question marks in the predicate are replaced by the arguments provided.
-If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="7-joins.html">on aux param</a>.</p>
+If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="6-joins.html">on aux param</a>.</p>
+<a class="header" href="#predicate-naming" id="predicate-naming"><h2>Predicate naming</h2></a>
+<p>Predicate names are made up with letters, digits and underscores. They must begin with a letter.</p>
+<p>While you can use any case in the derive definition, the derive will transform the name into <code>mixedCase</code> to follow
+the naming scheme of the struct fields. So a predicate name such as <code>My_Address_contains</code> corresponds
+in the Toql query to <code>@myAddressContains</code> and the builder method wqould be called with <code>.my_address_contains()</code>.</p>
+<p>Also names must be different than the fields names in a struct. Otherwise a duplicate definition error will occur.
+This is currently a limitation in the library.</p>
 <a class="header" href="#reference" id="reference"><h2>Reference</h2></a>
-<p>The full predicate syntax is
-<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param(name&quot;..&quot;, index = .), count_filter</code>
-where</p>
+<p>The full predicate syntax is</p>
+<pre><code class="language-rust ignore">    predicate(
+      name=&quot;..&quot;,
+      sql=&quot;..&quot;,
+      handler=&quot;..&quot;,
+      on_aux_param(name&quot;..&quot;, index = ..),
+      count_filter
+</code></pre>
+<p>where</p>
 <ul>
 <li><strong>name</strong> is the name of the predicate. It can be called in a Toql query with <code>@name ..</code>.
 If a predicate is defined on a joined struct, that predicate can be called with a path
-<code>@path_name ..</code>. See <a href="5-query-language/5-predictes.html">predicates in the query</a> for more details.</li>
+<code>@path_name ..</code>. See <a href="../5-query-language/6-predicates.html">predicates in the query</a> for more details.</li>
 <li><strong>sql</strong> is a raw SQL expression. Use <code>?</code> to insert a predicate param in the SQL,
 <code>..</code> for the table alias and <code>&lt;aux_param&gt;</code> for an aux param value.</li>
 <li><strong>handler</strong> allows a custom predicate handler (build SQL with a function).
 Provide a function name without parenthesis that return a struct that implement <code>toql::prelude::PredicateHandler</code></li>
-<li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building custom joins.
-and can only be used when the predicate takes exactly one argument. See <a href="7-join.html">example</a>.</li>
-<li><strong>count_filter</strong> determines that a predicate used in Toql query is also be used for <a href="3-api/2-load.html">count queries</a>.</li>
+<li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building <code>ON</code> conditions for joins.
+and can only be used when the predicate takes exactly one argument. See <a href="6-joins.html">example</a>.</li>
+<li><strong>count_filter</strong> makes Toql to use that a predicate for <a href="../3-api/2-load.html">count queries</a>.</li>
 </ul>
 
                     </main>

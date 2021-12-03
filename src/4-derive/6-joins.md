@@ -132,7 +132,7 @@ It is also possible to use the regular `..` alias to refer to the joining struct
 You can use auxiliary parameters (here *<interface_language_id>*) in `ON` expression. 
 Aux params usually come from a context, query.
 
-However for `ON` there is a third source : Aux params may also come from [query predicates](10-predicates.md).
+However for `ON` there is a third source : Aux params may also come from [query predicates](14-predicates.md).
 
 This allows some nifty joining, see here:
 
@@ -146,9 +146,9 @@ This allows some nifty joining, see here:
 
 	#[derive(Toql)]
 	#[toql( predicate(	
-				name = "language", 
+				name = "lang", 
 				sql = "EXISTS(SELECT 1 FROM Country c \
-					JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)", 
+					JOIN Language l ON (c.id = l.id)) WHERE l.id = ?)", 
 				on_aux_param(name="language_id", index = 0)
 			))]
 	struct Country {
@@ -171,17 +171,15 @@ This allows some nifty joining, see here:
 	let cache = Cache::new();
     let mut toql = MockDb::from(&cache);
 
-    let q = query!(Country, "@language 'fr'");
+    let q = query!(Country, "@lang 'fr'");
 
     let mut _users = toql.load_many(&q).await.unwrap(); 
     assert_eq!(toql.take_unsafe_sql(), 
-            "SELECT user.id, user_country.id, user_country_translation.id, user_country_translation.title \
-				FROM User user \
-				JOIN (Country user_country \
-					JOIN (CountryTranslation user_country_translation) \
-					ON (user_country.id = user_country_translation.id \
-						AND user_country_translation.language_id='en')) \
-				ON (user.country_id = user_country.id)"); 
+            "SELECT country.id FROM \
+				Country country \
+				WHERE EXISTS(\
+					SELECT 1 FROM Country c \
+					JOIN Language l ON (c.id = l.id)) WHERE l.id = 'fr')"); 
 #   }
 ```
 
@@ -190,7 +188,7 @@ There can be multiple countries that speak the same language.
 
 The predicate takes the one argument (`?`) and adds it to the aux_params for custom joins (`on_param`). 
 
-When the predicate is used in a Toql query, lets say  `*, @language 'fr'` the SQL will return countries that speak french.
+When the predicate is used in a Toql query, lets say  `*, @lang 'fr'` the SQL will return countries that speak french.
 In addition it will add `fr` to the aux_params when doing the custom join.  
 
 So each country will contain the `language` field with information about french.

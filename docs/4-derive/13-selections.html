@@ -142,7 +142,28 @@
                     <main>
                         <a class="header" href="#selections" id="selections"><h1>Selections</h1></a>
 <p>Selections are a list of fields and can be defined on a struct.
-A Toql query can then select the selection instead of all the individual fields. See <a href="../5-query-language/6-selections">here</a>.</p>
+A Toql query can then select the selection instead of all the individual fields.</p>
+<a class="header" href="#builtin-selections" id="builtin-selections"><h2>Builtin selections</h2></a>
+<p>For more information about selections, see also the <a href="../5-query-language/5-selections.html">chapter</a> in the query language.</p>
+<a class="header" href="#the-mutable-selection" id="the-mutable-selection"><h4>The mutable selection</h4></a>
+<p>The builtin <code>$mut</code> selection selects all fields that are mutable.
+This can be used for debugging purposes.
+The fields of this selection cannot be user defined.</p>
+<a class="header" href="#the-all-selection" id="the-all-selection"><h4>The all selection</h4></a>
+<p>The <code>$all</code> selects all fields from a struct. This includes fields that are marked with <code>skip_wildcard</code>.
+Joins and merges are not selected.
+The fields of this selection cannot be user defined.</p>
+<a class="header" href="#the-standart-selection" id="the-standart-selection"><h4>The standart selection</h4></a>
+<p>The standart selection <code>$std</code> behaves like any other user defined selection.
+However Toql supports this standart selection with the special short alias <code>$</code> in Toql queries.</p>
+<p>If the derive doesn't map the <code>$std</code> selection a query asking for it will fail.
+This is the same behaviour as for any other user defined selection.</p>
+<a class="header" href="#the-count-selection" id="the-count-selection"><h4>The count selection</h4></a>
+<p>To build count queries Toql considers filters on fields that are part of the <code>$cnt</code>
+selection.</p>
+<p>Predicates that should also be considered when building a count selection must be marked
+with the <code>count_filter</code> flag. See the next chapter on <a href="14-predicates.html">predicates</a>.</p>
+<a class="header" href="#example" id="example"><h2>Example</h2></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -156,10 +177,10 @@ struct User {
  #[toql(key)]
  id: u64,
 
- name: String,
+ name: Option&lt;String&gt;,
 
  #[toql(join)]
- address: Address
+ address: Option&lt;Address&gt;
 }
  
 #[derive(Toql)]
@@ -168,14 +189,10 @@ struct Address {
  #[toql(key)]
  id: u64,
 
- street: String
+ street: Option&lt;String&gt;
 }
 #}</code></pre></pre>
-<p>Notice that selection names with 3 letters or less are internally reserved and my have special meanings.
-They can't be defined except <code>std</code> and <code>cnt</code>.</p>
-<p>The selections above can now be used in a query. Instead of writing <code>name, address_street</code> it is possible to write <code>$std</code> or event just <code>$</code>.
-(Because the standart selection is so common, <code>$</code> aliases to <code>$std</code>).</p>
-<p>The <code>cnt</code> selection is defined in a similar way.TODO</p>
+<p>The selections above can now be used in a query. Instead of asking for <code>name, address_street</code> it is possible to ask for <code>$std</code> or just <code>$</code>.</p>
 
                     </main>
 

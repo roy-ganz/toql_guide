@@ -77,5 +77,5 @@ Here it restricts the number of films.
 
 ## Other uses of raw SQL
 There are other places you can use raw SQL:
- - [Predicates](10-predicates.md)
- - [Custom Merge](4-derive/5-merges)
+ - [Predicates](14-predicates.md)
+ - [Custom Merge](9-merges.md)

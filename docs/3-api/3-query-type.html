@@ -140,7 +140,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="#the-query-type" id="the-query-type"><h2>The Query type</h2></a>
+                        <a class="header" href="#the-query-type" id="the-query-type"><h2>The <code>Query</code> type</h2></a>
 <p>All load functions need a query, but how is this build?</p>
 <p>The recommended way is to use the <code>query!</code> macro.</p>
 <p>Alternatives are</p>
@@ -149,7 +149,7 @@
 <li>or to parse a string</li>
 </ul>
 <p>This chapter does not explain the Toql query language itself, see <a href="../5-query-language/1-introduction.html">here</a> to learn about that.</p>
-<a class="header" href="#the-query-macro" id="the-query-macro"><h3>The query! macro</h3></a>
+<a class="header" href="#the-query-macro" id="the-query-macro"><h3>The <code>query!</code> macro</h3></a>
 <p>The <code>query!</code> macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up
 as compiler errors!</p>
 <p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here (This assumes a Toql derived User struct):</p>
@@ -408,7 +408,7 @@ assert_eq!(q.to_string(), &quot;*,authorId EQ 5&quot;);
 <p>The <code>query!</code> macro produces a <code>Query</code> type and can further be altered using all methods from that type.
 One interesting method is <code>with</code>. It takes a <code>QueryWith</code> trait that can be implemented for any custom type to enhance the query.
 This is more powerful than <code>Into&lt;Query&gt;</code> because you can also access auxiliary parameters.</p>
-<p>Aux params can be used in SQL expressions. See <a href="4-derive/2-sql-expressions.html">here</a> more information.</p>
+<p>Aux params can be used in SQL expressions. See <a href="../4-derive/4-sql-expressions.html">here</a> more information.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {

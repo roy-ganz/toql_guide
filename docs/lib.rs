@@ -25,11 +25,11 @@ external_doc_test!(include_str!("3-api/6-delete.md"));
 // TODO external_doc_test!(include_str!("3-api/7-writing-functions.md"));
 
 external_doc_test!(include_str!("4-derive/1-introduction.md"));
-// BUG skip_wildcrad external_doc_test!(include_str!("4-derive/2-fields.md"));
+external_doc_test!(include_str!("4-derive/2-fields.md"));
 external_doc_test!(include_str!("4-derive/3-optional-fields.md"));
 external_doc_test!(include_str!("4-derive/4-sql-expressions.md"));
 external_doc_test!(include_str!("4-derive/5-field-handlers.md"));
-// BUG double definition external_doc_test!(include_str!("4-derive/6-joins.md"));
+external_doc_test!(include_str!("4-derive/6-joins.md"));
  external_doc_test!(include_str!("4-derive/7-join-handlers.md"));
 external_doc_test!(include_str!("4-derive/8-partial-tables.md"));
 external_doc_test!(include_str!("4-derive/9-merges.md"));
@@ -54,12 +54,4 @@ external_doc_test!(include_str!("6-appendix/1-introduction.md"));
 external_doc_test!(include_str!("6-appendix/3-row-access-control.md"));
 external_doc_test!(include_str!("6-appendix/4-serde.md"));
 external_doc_test!(include_str!("6-appendix/5-debugging-toql.md"));
-
-
-
-
-
-
-
-
 }

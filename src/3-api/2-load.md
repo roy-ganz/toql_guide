@@ -99,5 +99,5 @@ The author wants to see all books that contain the word _**world**_. What will h
  
  In practice the *total page count* is not so straight forward to select: 
  Toql needs to decide, which filters from the query to consider or ignore when building the count SQL statement.
- For the *total page count* only filters are used on fields that are listed in the special [count selection](../4-derive/9-selections.md) and [predicates](../4-derive/10-predicates.md) that are marked as count filters.
+ For the *total page count* only filters are used on fields that are listed in the special [count selection](../4-derive/13-selections.md) and [predicates](../4-derive/14-predicates.md) that are marked as count filters.
  

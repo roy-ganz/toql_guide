@@ -45,16 +45,16 @@ struct User {
 	#[toql(join)]
 	address2: Option<Option<Address>>,//  Update foreign_key or NULL, if Some 
 
-	#[toql(join())]
+	#[toql(join)]
 	address3: Address, 		// Update foreign_key
 
-	#[toql(join(), preselect)]
+	#[toql(join, preselect)]
 	address4: Option<Address>,	// Update foreign_key or NULL
 
-	#[toql(merge())]
+	#[toql(merge)]
 	phones1: Vec<Phone>,	// No effect for *
 
-	#[toql(merge())]
+	#[toql(merge)]
 	phones2: Option<Vec<Phone>> // No effect for *, 
 }
 ```

@@ -1,6 +1,6 @@
 # Selections
 
-A typical query selects a lot of fields. Instead of writing out a long list of fields, predefined field lists can be [mapped](../3-api/9-selections.md).
+A typical query selects a lot of fields. Instead of writing out a long list of fields, predefined field lists can be [mapped](../4-derive/13-selections.md).
 
 The list can then be selected with a `$` followed by the selection name.
 

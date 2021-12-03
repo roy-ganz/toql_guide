@@ -1,15 +1,25 @@
-# Guide for Toql 
+# Guide for Toql 0.4
 
-This is a user guide for  [Toql](https://docs.rs/toql/0.3/toql/), an ORM for async databases.
+This is the user guide for [Toql](https://docs.rs/toql/0.3/toql/), an ORM with support for async databases.
 
 ## Build
 
-This guide uses mdbook.
+This guide uses [mdBook](https://github.com/rust-lang/mdBook).
 
 To build the `/src` folder and put the guide into `/docs` run:
 
 ```bash
 mdbook build
+```
+
+If you want to see the output after the build call with `--open` option.
+
+## Test
+
+The examples in the guide can be tested with
+
+```bash
+cargo test --doc
 ```
 
 

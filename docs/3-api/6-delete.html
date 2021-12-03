@@ -144,7 +144,7 @@
 <p>There are two delete functions: <code>delete_one</code>, and <code>delete_many</code>.</p>
 <p>Both functions take a predicate and delete all rows that match that predicate.</p>
 <p><code>delete_one</code> takes a key. It will build a filter predicate from that and delete the row that coresponds to the key.</p>
-<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the <a href="5-query-lanuage/1-introduction.html">query language</a> for details.</p>
+<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the <a href="../5-query-language/1-introduction.html">query language</a> for details.</p>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
 #   async fn main(){
 use toql::prelude::{ToqlApi, Cache, Toql, query, Keyed};

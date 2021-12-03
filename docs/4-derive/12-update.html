@@ -186,16 +186,16 @@ struct User {
     #[toql(join)]
     address2: Option&lt;Option&lt;Address&gt;&gt;,//  Update foreign_key or NULL, if Some 
 
-    #[toql(join())]
+    #[toql(join)]
     address3: Address, 		// Update foreign_key
 
-    #[toql(join(), preselect)]
+    #[toql(join, preselect)]
     address4: Option&lt;Address&gt;,	// Update foreign_key or NULL
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones1: Vec&lt;Phone&gt;,	// No effect for *
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones2: Option&lt;Vec&lt;Phone&gt;&gt; // No effect for *, 
 }
 #}</code></pre></pre>

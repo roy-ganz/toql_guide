@@ -1,5 +1,5 @@
 
-## The Query type
+## The `Query` type
 All load functions need a query, but how is this build?
 
 The recommended way is to use the `query!` macro.
@@ -11,7 +11,7 @@ Alternatives are
 This chapter does not explain the Toql query language itself, see [here](../5-query-language/1-introduction.md) to learn about that.
 
 
-### The query! macro 
+### The `query!` macro 
 The `query!` macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up 
 as compiler errors! 
 
@@ -284,7 +284,7 @@ The `query!` macro produces a `Query` type and can further be altered using all 
 One interesting method is `with`. It takes a `QueryWith` trait that can be implemented for any custom type to enhance the query. 
 This is more powerful than `Into<Query>` because you can also access auxiliary parameters.
 
-Aux params can be used in SQL expressions. See [here](4-derive/2-sql-expressions.md) more information.
+Aux params can be used in SQL expressions. See [here](../4-derive/4-sql-expressions.md) more information.
 
 ```rust
 use toql::prelude::{QueryWith, Query};

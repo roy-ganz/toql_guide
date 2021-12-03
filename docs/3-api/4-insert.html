@@ -176,13 +176,13 @@ toql.insert_many::&lt;User,_&gt;(&amp;mut [&amp;mut u], paths!(top)).await.unwra
 <p>In the example above the first <code>insert_one</code> will insert <code>u</code> into the database,
 load back the generated id and sets it on <code>u</code>.
 The second <code>insert_one</code> makes a copy of <code>u</code> and again refreshes its <code>id</code> field.</p>
-<p>Optional fields that are <code>None</code> will insert the default value of the database. See <a href="4-derive/6-insert.html">the mapping</a> for details.</p>
+<p>Optional fields that are <code>None</code> will insert the default value of the database. See <a href="../4-derive/11-insert.html">the mapping</a> for details.</p>
 <a class="header" href="#the-paths-macro" id="the-paths-macro"><h3>The paths! macro</h3></a>
 <p>The <code>paths!</code> macro compiles a path list. Any invalid path will show up at compile time. The insert functions insert all referenced joins and merges from such a path list.</p>
 <p>Let's assume a struct <code>User</code> that has a <code>Vec</code> of <code>books</code> with each book joining a <code>publisher</code>. A path list like <code>paths!(User, &quot;books_publisher&quot;)</code> will</p>
 <ul>
 <li>insert all fields from <code>User</code>.</li>
-<li>if the <code>id</code> of <code>User</code> is marked as <a href="4-derive/2-keys.html">auto key</a>, Toql will load the generated <code>id</code> from the database and update <code>User</code> and the composite key in <code>books</code>.</li>
+<li>if the <code>id</code> of <code>User</code> is marked as <a href="../4-derive/10-keys.html">auto key</a>, Toql will load the generated <code>id</code> from the database and update <code>User</code> and the composite key in <code>books</code>.</li>
 <li>insert all fields from the joined <code>publisher</code>.</li>
 <li>handle the <code>id</code> of publisher like the one in <code>books</code>.</li>
 <li>insert the merged books with the correct composite keys.</li>
@@ -191,15 +191,15 @@ The second <code>insert_one</code> makes a copy of <code>u</code> and again refr
 <p>If you only want to insert a <code>publisher</code>, then you must call <code>insert</code> on a <code>publisher</code> object.</p>
 <p>The paths in the list may overlap. In the path list <code>paths!(User, &quot;books_publisher, books_printedBy&quot;)</code> <code>book</code> appears twice. No problem it will only be inserted once.</p>
 <a class="header" href="#skipping-values" id="skipping-values"><h3>Skipping values</h3></a>
-<p>When inserting a struct some fields are excluded</p>
+<p>When inserting a struct some fields are excluded:</p>
 <ul>
-<li>Fields that map to an <a href="2-sql-expressions.html">SQL expression</a></li>
+<li>Fields that map to an <a href="../4-derive/4-sql-expressions.html">SQL expression</a></li>
 <li>Fields or structs with the atribute <code>skip_mut</code></li>
 <li>Joins with custom ON predicate</li>
-<li>Merges with custom <a href="../4-derive/5-merges.html">sql_join</a></li>
+<li>Merges with custom <a href="../4-derive/9-merges.html">sql_join</a></li>
 </ul>
 <a class="header" href="#partial-tables" id="partial-tables"><h3>Partial tables</h3></a>
-<p>It is possible to split up a table into multiple tables sharing the same primary key. See <a href="4-derive/4-partial-tables">here</a>.</p>
+<p>It is possible to split up a table into multiple tables sharing the same primary key. See <a href="../4-derive/8-partial-tables">here</a>.</p>
 <p>If a path in the path list refers to a struct that contains joins marked as <code>partial table</code> then these
 joins will also be inserted. There is no need to mention these dependencies in the path list.</p>
 <a class="header" href="#key-dependencies" id="key-dependencies"><h3>Key dependencies</h3></a>

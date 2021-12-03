@@ -7,14 +7,13 @@ The derive provides struct level attributes and field level attributes. Here a l
 Attribute | Description                             | Example / Remark
 ---- |---| ---|
 tables  |   Table renaming scheme for struct and joins |  `CamelCase`, `snake_case`, `SHOUTY_SNAKE_CASE` or `mixedCase`
-columns        | Column renaming scheme |
-table | Table name for a struct or join | `table ="User"` on struct `NewUser` will access table `User`
-skip_mut |No code for insert, delete and update | struct cannot be updated
+table | Table name for a struct or join | `table = "User"` on struct `NewUser` will access table `User`
+columns        | Column renaming scheme | Same cases as above.
+skip_mut |No code for insert, delete and update | For structs that are read only.
 predicate |  Define a predicate | `predicate(name="test", sql="MATCH(..name, ..address) AGAINST (?)")` 
 selection |  Define a selection | `selection(name="test", fields="*, address_street")` 
-alias |Ignore calculated alias and use this alias instead| `alias="tb1"` 
-auto_key | Key is generated in database | `auto_key` Updates struct keys after inserts.
-roles  |  role restriction for load, update, insert, delete | `roles(update="admin;teacher", insert="admin")`
+auto_key | Key is generated in database | `auto_key` updates struct keys after inserts.
+roles  |  Role restriction for load, update, insert, delete | `roles(update="admin;teacher", insert="admin")`
 
 ## Attributes for fields  
 

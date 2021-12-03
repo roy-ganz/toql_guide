@@ -41,7 +41,7 @@ In the example above all four statements do the same.
 The `fields!` macro compiles a list of fields. Any invalid path or field name shows up at compile time.
 
 The update function will consider all fields from the field list to update. Optional fields will only 
-be updated if they contain some value. See [the mapping](4-derive/12-update.md) for details.
+be updated if they contain some value. See [the mapping](../4-derive/12-update.md) for details.
 
 #### Joins
 You can update only the foreign key of a join or field from the join. Consider this field list:

@@ -5,7 +5,7 @@ The handler can only build a custom ON predicate.
 
 Why would you do it? I don't know :) 
 
-In all cases I can think of you get your `ON` predicate cheaper with [on_sql](7-joins.md).
+In all cases I can think of you get your `ON` predicate cheaper with [on_sql](6-joins.md).
 
 However it's still possible:
 

@@ -163,10 +163,39 @@ struct User {
     name: Option&lt;String&gt;
 }
 #}</code></pre></pre>
+<a class="header" href="#auto-key" id="auto-key"><h2>Auto key</h2></a>
+<p>If your primary key is generated in your database you can tell this with the <code>[#toql(auto_key)]</code>.
+Inserts will ignore the primary keys and instead load the new key from the database.
+The new key is then stored in the struct field.</p>
+<p>Notice this cannot be used with joined keys.</p>
+<a class="header" href="#example-1" id="example-1"><h4>Example:</h4></a>
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi,Cache, query, ContextBuilder, paths};
+use toql::mock_db::MockDb;
+
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User {
+  #[toql(key)]
+  id: u64,
+  name: Option&lt;String&gt;
+}
+
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
+let mut user = User {id:0, name: Some(&quot;Mary&quot;.to_string())};
+
+toql.insert_one(&amp;mut user, paths!(top)).await.unwrap(); 
+
+assert_eq!(toql.take_unsafe_sql(), &quot;INSERT INTO User (name) VALUES ('Mary')&quot;);
+assert_eq!(user.id, 100);
+#   }
+</code></pre></pre>
 <a class="header" href="#joins" id="joins"><h2>Joins</h2></a>
 <p><em>Inner</em> joins can also have the <code>key</code> attribute. This is useful for association tables.</p>
 <p>For a join used as a key the SQL builder takes the primary key of the joined struct to guess the foreign key columns.</p>
-<a class="header" href="#example-1" id="example-1"><h4>Example:</h4></a>
+<a class="header" href="#example-2" id="example-2"><h4>Example:</h4></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -187,23 +216,23 @@ struct UserLanguage {
   #[toql(key)] 
   user_id: u64,
 
-  #[toql(join, key)]  
+  #[toql(key, join)]  
   language: Language 
 }
 #}</code></pre></pre>
-<p>For the example above Toql assumes that the database table <code>UserLanguage</code>  has a composite key made up of the two columns <code>user_id</code> and <code>language_code</code>. You can change this assumption, see <a href="4-derive/4-joins.html">here</a>.</p>
+<p>For the example above Toql assumes that the database table <code>UserLanguage</code>  has a composite key made up of the two columns <code>user_id</code> and <code>language_code</code>. You can change this assumption, see <a href="6-joins.html">here</a>.</p>
 <a class="header" href="#generated-key-struct" id="generated-key-struct"><h2>Generated key struct</h2></a>
 <p>The Toql derive creates for every struct a corresponding key struct. The key struct contains only the fields marked as key form the derived stuct.</p>
-<p>Keys are useful to :</p>
+<p>Keys are useful to</p>
 <ul>
-<li>Delete a value with <code>delete_one</code>.</li>
-<li>Build a <a href="3-api/2-load.html">query</a>.</li>
-<li>Update a <a href="4-derive/4-joins.html">join</a>.</li>
+<li>delete a value with <code>delete_one</code>.</li>
+<li>build a <a href="../3-api/2-load.html">query</a>.</li>
+<li>update a <a href="6-joins.html">join</a>.</li>
 </ul>
-<p>Keys can be serialized and deserialized with serde, if the <code>serde</code> feature is eanbled.
+<p>Keys can be serialized and deserialized with serde, if the <code>serde</code> feature is enabled.
 This allows web clients to send either a full entity or just the key of it,
-if they want to update some dependency.</p>
-<a class="header" href="#example-2" id="example-2"><h4>Example</h4></a>
+if they want to update some foreign key.</p>
+<a class="header" href="#example-3" id="example-3"><h4>Example</h4></a>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
 #   async fn main() {
 #   use toql::prelude::{ToqlApi,Cache, query, ContextBuilder};
@@ -225,7 +254,7 @@ toql.delete_one(key).await.unwrap();
 # }
 </code></pre></pre>
 <a class="header" href="#unkeyable-fields" id="unkeyable-fields"><h2>Unkeyable fields</h2></a>
-<p>Only columns and inner joins can be used as keys. Merged fields (<code>Vec&lt;T&gt;</code>) and fields that map to an Sql expression (<code>#[toql(sql=&quot;..&quot;)</code>) cannot be used as keys.</p>
+<p>Only columns and inner joins can be used as keys. Merged fields (<code>Vec&lt;T&gt;</code>) and fields that map to an SQL expression (<code>#[toql(sql=&quot;..&quot;)</code>) cannot be used as keys.</p>
 
                     </main>
 

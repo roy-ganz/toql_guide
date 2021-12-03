@@ -142,10 +142,10 @@
                     <main>
                         <a class="header" href="#insert" id="insert"><h1>Insert</h1></a>
 <p>When you insert a struct, all fields, including foreign keys of joins, will be inserted.</p>
-<p>Check <a href="../3-api/4-insert.html">the api</a> for details.</p>
+<p>Check <a href="../3-api/4-insert.html">the API</a> for details.</p>
 <a class="header" href="#default-values" id="default-values"><h2>Default values</h2></a>
-<p>For <em>selectable</em> fields in a struct that are <code>None</code> Toql will insert the default value for the corresponding table column.
-If you have not defined a default value in your database you must ensure that the field in the struct cannot be <code>None</code>.
+<p>For Selectable fields in a struct that are <code>None</code> the default value will be inserted.
+If you have not defined a default value in your database you must ensure that the field in the struct can't be <code>None</code>.
 This can be done through prior validation.</p>
 <a class="header" href="#insert-behaviour" id="insert-behaviour"><h2>Insert behaviour</h2></a>
 <p>The insert behaviour depends on the type amd mapping of a field:</p>
@@ -171,7 +171,7 @@ use toql::prelude::Toql;
 #[derive(Toql)]
 struct User {
     #[toql(key)]
-    id: u64,                     // Keys are never inserted
+    id: u64,                    
     
     username: String,		// Value
     realname: Option&lt;String&gt;,	// Default or value

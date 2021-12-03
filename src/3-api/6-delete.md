@@ -6,7 +6,7 @@ Both functions take a predicate and delete all rows that match that predicate.
 
 `delete_one` takes a key. It will build a filter predicate from that and delete the row that coresponds to the key.
 
-`delete_many` builds a predicate from the filters of the `Query` argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the [query language](5-query-lanuage/1-introduction.md) for details.
+`delete_many` builds a predicate from the filters of the `Query` argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the [query language](../5-query-language/1-introduction.md) for details.
 
 ```rust
 #   #[tokio::main(flavor="current_thread")]

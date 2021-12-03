@@ -365,8 +365,8 @@ get at most 4 rows back.</li>
 </ul>
 <p>In practice the <em>total page count</em> is not so straight forward to select:
 Toql needs to decide, which filters from the query to consider or ignore when building the count SQL statement.
-For the <em>total page count</em> only filters are used on fields that are listed in the special <a href="3-api/../4-derive/9-selections.html">count selection</a> and <a href="3-api/../4-derive/10-predicates.html">predicates</a> that are marked as count filters.</p>
-<a class="header" href="#the-query-type" id="the-query-type"><h2>The Query type</h2></a>
+For the <em>total page count</em> only filters are used on fields that are listed in the special <a href="3-api/../4-derive/13-selections.html">count selection</a> and <a href="3-api/../4-derive/14-predicates.html">predicates</a> that are marked as count filters.</p>
+<a class="header" href="#the-query-type" id="the-query-type"><h2>The <code>Query</code> type</h2></a>
 <p>All load functions need a query, but how is this build?</p>
 <p>The recommended way is to use the <code>query!</code> macro.</p>
 <p>Alternatives are</p>
@@ -375,7 +375,7 @@ For the <em>total page count</em> only filters are used on fields that are liste
 <li>or to parse a string</li>
 </ul>
 <p>This chapter does not explain the Toql query language itself, see <a href="3-api/../5-query-language/1-introduction.html">here</a> to learn about that.</p>
-<a class="header" href="#the-query-macro" id="the-query-macro"><h3>The query! macro</h3></a>
+<a class="header" href="#the-query-macro" id="the-query-macro"><h3>The <code>query!</code> macro</h3></a>
 <p>The <code>query!</code> macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up
 as compiler errors!</p>
 <p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here (This assumes a Toql derived User struct):</p>
@@ -634,7 +634,7 @@ assert_eq!(q.to_string(), &quot;*,authorId EQ 5&quot;);
 <p>The <code>query!</code> macro produces a <code>Query</code> type and can further be altered using all methods from that type.
 One interesting method is <code>with</code>. It takes a <code>QueryWith</code> trait that can be implemented for any custom type to enhance the query.
 This is more powerful than <code>Into&lt;Query&gt;</code> because you can also access auxiliary parameters.</p>
-<p>Aux params can be used in SQL expressions. See <a href="3-api/4-derive/2-sql-expressions.html">here</a> more information.</p>
+<p>Aux params can be used in SQL expressions. See <a href="3-api/../4-derive/4-sql-expressions.html">here</a> more information.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -732,13 +732,13 @@ toql.insert_many::&lt;User,_&gt;(&amp;mut [&amp;mut u], paths!(top)).await.unwra
 <p>In the example above the first <code>insert_one</code> will insert <code>u</code> into the database,
 load back the generated id and sets it on <code>u</code>.
 The second <code>insert_one</code> makes a copy of <code>u</code> and again refreshes its <code>id</code> field.</p>
-<p>Optional fields that are <code>None</code> will insert the default value of the database. See <a href="3-api/4-derive/6-insert.html">the mapping</a> for details.</p>
+<p>Optional fields that are <code>None</code> will insert the default value of the database. See <a href="3-api/../4-derive/11-insert.html">the mapping</a> for details.</p>
 <a class="header" href="#the-paths-macro" id="the-paths-macro"><h3>The paths! macro</h3></a>
 <p>The <code>paths!</code> macro compiles a path list. Any invalid path will show up at compile time. The insert functions insert all referenced joins and merges from such a path list.</p>
 <p>Let's assume a struct <code>User</code> that has a <code>Vec</code> of <code>books</code> with each book joining a <code>publisher</code>. A path list like <code>paths!(User, &quot;books_publisher&quot;)</code> will</p>
 <ul>
 <li>insert all fields from <code>User</code>.</li>
-<li>if the <code>id</code> of <code>User</code> is marked as <a href="3-api/4-derive/2-keys.html">auto key</a>, Toql will load the generated <code>id</code> from the database and update <code>User</code> and the composite key in <code>books</code>.</li>
+<li>if the <code>id</code> of <code>User</code> is marked as <a href="3-api/../4-derive/10-keys.html">auto key</a>, Toql will load the generated <code>id</code> from the database and update <code>User</code> and the composite key in <code>books</code>.</li>
 <li>insert all fields from the joined <code>publisher</code>.</li>
 <li>handle the <code>id</code> of publisher like the one in <code>books</code>.</li>
 <li>insert the merged books with the correct composite keys.</li>
@@ -747,15 +747,15 @@ The second <code>insert_one</code> makes a copy of <code>u</code> and again refr
 <p>If you only want to insert a <code>publisher</code>, then you must call <code>insert</code> on a <code>publisher</code> object.</p>
 <p>The paths in the list may overlap. In the path list <code>paths!(User, &quot;books_publisher, books_printedBy&quot;)</code> <code>book</code> appears twice. No problem it will only be inserted once.</p>
 <a class="header" href="#skipping-values" id="skipping-values"><h3>Skipping values</h3></a>
-<p>When inserting a struct some fields are excluded</p>
+<p>When inserting a struct some fields are excluded:</p>
 <ul>
-<li>Fields that map to an <a href="3-api/2-sql-expressions.html">SQL expression</a></li>
+<li>Fields that map to an <a href="3-api/../4-derive/4-sql-expressions.html">SQL expression</a></li>
 <li>Fields or structs with the atribute <code>skip_mut</code></li>
 <li>Joins with custom ON predicate</li>
-<li>Merges with custom <a href="3-api/../4-derive/5-merges.html">sql_join</a></li>
+<li>Merges with custom <a href="3-api/../4-derive/9-merges.html">sql_join</a></li>
 </ul>
 <a class="header" href="#partial-tables" id="partial-tables"><h3>Partial tables</h3></a>
-<p>It is possible to split up a table into multiple tables sharing the same primary key. See <a href="4-derive/4-partial-tables">here</a>.</p>
+<p>It is possible to split up a table into multiple tables sharing the same primary key. See <a href="../4-derive/8-partial-tables">here</a>.</p>
 <p>If a path in the path list refers to a struct that contains joins marked as <code>partial table</code> then these
 joins will also be inserted. There is no need to mention these dependencies in the path list.</p>
 <a class="header" href="#key-dependencies" id="key-dependencies"><h3>Key dependencies</h3></a>
@@ -795,7 +795,7 @@ toql.update_many(&amp;mut [user], fields!(top)).await.unwrap();
 <a class="header" href="#the-fields-macro" id="the-fields-macro"><h3>The fields! macro</h3></a>
 <p>The <code>fields!</code> macro compiles a list of fields. Any invalid path or field name shows up at compile time.</p>
 <p>The update function will consider all fields from the field list to update. Optional fields will only
-be updated if they contain some value. See <a href="3-api/4-derive/12-update.html">the mapping</a> for details.</p>
+be updated if they contain some value. See <a href="3-api/../4-derive/12-update.html">the mapping</a> for details.</p>
 <a class="header" href="#joins" id="joins"><h4>Joins</h4></a>
 <p>You can update only the foreign key of a join or field from the join. Consider this field list:</p>
 <pre><code class="language-rust ignore">let f = fields!(User, &quot;*, address, address_*, address_id&quot;);
@@ -888,7 +888,7 @@ Toql will notice that and insert a new book (with the correct <code>user_id</cod
 <p>There are two delete functions: <code>delete_one</code>, and <code>delete_many</code>.</p>
 <p>Both functions take a predicate and delete all rows that match that predicate.</p>
 <p><code>delete_one</code> takes a key. It will build a filter predicate from that and delete the row that coresponds to the key.</p>
-<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the <a href="3-api/5-query-lanuage/1-introduction.html">query language</a> for details.</p>
+<p><code>delete_many</code> builds a predicate from the filters of the <code>Query</code> argument. Field filters and predicates and considered, whereas field selects and selections in the query are ignored. See the <a href="3-api/../5-query-language/1-introduction.html">query language</a> for details.</p>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
 #   async fn main(){
 use toql::prelude::{ToqlApi, Cache, Toql, query, Keyed};
@@ -1097,17 +1097,16 @@ struct Country {
     name: String,
 }
 
+let cache = Cache::default();
+let mut toql = MockDb::from(&amp;cache);
 
-    let cache = Cache::default();
-    let mut toql = MockDb::from(&amp;cache);
-  
-    let q = query!(UserRef, &quot;id, fullName, country_id&quot;); 
-    let mut users = toql.load_many(&amp;q).await.unwrap(); 
-    assert_eq!(toql.take_unsafe_sql(), 
-            &quot;SELECT user.id, user.full_name, user_country.id, user_country.name \
-                FROM User user \
-                JOIN (Country user_country) \
-                ON (user.country_id = user_country.id)&quot;);
+let q = query!(UserRef, &quot;id, fullName, country_id&quot;); 
+let mut users = toql.load_many(&amp;q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), 
+        &quot;SELECT user.id, user.full_name, user_country.id, user_country.name \
+            FROM User user \
+            JOIN (Country user_country) \
+            ON (user.country_id = user_country.id)&quot;);
 
 # }
 </code></pre></pre>
@@ -1118,6 +1117,8 @@ struct Country {
 <li><code>skip_mut</code> ensures a field is never updated, automatically added for keys and SQL expressions.</li>
 <li><code>skip_wildcard</code> removes a field from default <a href="4-derive/../5-query-language/2-select.html">wildcard selection</a>, use for expensive SQL expressions or soft hiding.</li>
 </ul>
+<p>Notice that for <code>skip_wildcard</code> the field must be selectable (<code>Option&lt;T&gt;</code>).
+Otherwise Toql must always load a value to satisfy the deserializer.</p>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
 #   async fn main() {
 use toql::prelude::{Toql, ToqlApi, query, Cache};
@@ -1133,10 +1134,10 @@ struct UserRef {
     full_name: String,
 
     #[toql(skip_wildcard)]
-    middle_name: String,
+    middle_name: Option&lt;String&gt;,
 
     #[toql(skip)]
-    value: String,
+    value: Option&lt;String&gt;,
 
 }
     let cache = Cache::default();
@@ -1312,8 +1313,8 @@ Here it restricts the number of films.</p>
 <a class="header" href="#other-uses-of-raw-sql" id="other-uses-of-raw-sql"><h2>Other uses of raw SQL</h2></a>
 <p>There are other places you can use raw SQL:</p>
 <ul>
-<li><a href="4-derive/10-predicates.html">Predicates</a></li>
-<li><a href="4-derive/5-merges">Custom Merge</a></li>
+<li><a href="4-derive/14-predicates.html">Predicates</a></li>
+<li><a href="4-derive/9-merges.html">Custom Merge</a></li>
 </ul>
 <a class="header" href="#field-handlers" id="field-handlers"><h1>Field handlers</h1></a>
 <p>It's possible to write an own field handler. Do it, because</p>
@@ -1520,7 +1521,7 @@ This will resolve to the alias of the joined struct (CountryTranslation).</p>
 <p>It is also possible to use the regular <code>..</code> alias to refer to the joining struct (Country), but we don't need it here.</p>
 <p>You can use auxiliary parameters (here <em>&lt;interface_language_id&gt;</em>) in <code>ON</code> expression.
 Aux params usually come from a context, query.</p>
-<p>However for <code>ON</code> there is a third source : Aux params may also come from <a href="4-derive/10-predicates.html">query predicates</a>.</p>
+<p>However for <code>ON</code> there is a third source : Aux params may also come from <a href="4-derive/14-predicates.html">query predicates</a>.</p>
 <p>This allows some nifty joining, see here:</p>
 <a class="header" href="#example-with-on_aux_param" id="example-with-on_aux_param"><h3>Example with on_aux_param</h3></a>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
@@ -1531,9 +1532,9 @@ Aux params usually come from a context, query.</p>
 
     #[derive(Toql)]
     #[toql( predicate(	
-                name = &quot;language&quot;, 
+                name = &quot;lang&quot;, 
                 sql = &quot;EXISTS(SELECT 1 FROM Country c \
-                    JOIN Language l ON (c.id= l.id)) WHERE l.id= ?)&quot;, 
+                    JOIN Language l ON (c.id = l.id)) WHERE l.id = ?)&quot;, 
                 on_aux_param(name=&quot;language_id&quot;, index = 0)
             ))]
     struct Country {
@@ -1556,23 +1557,21 @@ Aux params usually come from a context, query.</p>
     let cache = Cache::new();
     let mut toql = MockDb::from(&amp;cache);
 
-    let q = query!(Country, &quot;@language 'fr'&quot;);
+    let q = query!(Country, &quot;@lang 'fr'&quot;);
 
     let mut _users = toql.load_many(&amp;q).await.unwrap(); 
     assert_eq!(toql.take_unsafe_sql(), 
-            &quot;SELECT user.id, user_country.id, user_country_translation.id, user_country_translation.title \
-                FROM User user \
-                JOIN (Country user_country \
-                    JOIN (CountryTranslation user_country_translation) \
-                    ON (user_country.id = user_country_translation.id \
-                        AND user_country_translation.language_id='en')) \
-                ON (user.country_id = user_country.id)&quot;); 
+            &quot;SELECT country.id FROM \
+                Country country \
+                WHERE EXISTS(\
+                    SELECT 1 FROM Country c \
+                    JOIN Language l ON (c.id = l.id)) WHERE l.id = 'fr')&quot;); 
 #   }
 </code></pre></pre>
 <p>Above we add a predicate that allows to filter all countries by a language.
 There can be multiple countries that speak the same language.</p>
 <p>The predicate takes the one argument (<code>?</code>) and adds it to the aux_params for custom joins (<code>on_param</code>).</p>
-<p>When the predicate is used in a Toql query, lets say  <code>*, @language 'fr'</code> the SQL will return countries that speak french.
+<p>When the predicate is used in a Toql query, lets say  <code>*, @lang 'fr'</code> the SQL will return countries that speak french.
 In addition it will add <code>fr</code> to the aux_params when doing the custom join.</p>
 <p>So each country will contain the <code>language</code> field with information about french.</p>
 <p>It's somehow hacky, but it works and is useful in 1-n situations when you want 1-1 .</p>
@@ -1643,7 +1642,7 @@ This key can be always be taken out from <code>Join</code>.</li>
 <p>When doing a join, it's possible do write a custom handler.
 The handler can only build a custom ON predicate.</p>
 <p>Why would you do it? I don't know :)</p>
-<p>In all cases I can think of you get your <code>ON</code> predicate cheaper with <a href="4-derive/7-joins.html">on_sql</a>.</p>
+<p>In all cases I can think of you get your <code>ON</code> predicate cheaper with <a href="4-derive/6-joins.html">on_sql</a>.</p>
 <p>However it's still possible:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
@@ -1873,10 +1872,39 @@ struct User {
     name: Option&lt;String&gt;
 }
 #}</code></pre></pre>
+<a class="header" href="#auto-key" id="auto-key"><h2>Auto key</h2></a>
+<p>If your primary key is generated in your database you can tell this with the <code>[#toql(auto_key)]</code>.
+Inserts will ignore the primary keys and instead load the new key from the database.
+The new key is then stored in the struct field.</p>
+<p>Notice this cannot be used with joined keys.</p>
+<a class="header" href="#example-3" id="example-3"><h4>Example:</h4></a>
+<pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
+#   async fn main() {
+use toql::prelude::{Toql, ToqlApi,Cache, query, ContextBuilder, paths};
+use toql::mock_db::MockDb;
+
+#[derive(Toql)]
+#[toql(auto_key)]
+struct User {
+  #[toql(key)]
+  id: u64,
+  name: Option&lt;String&gt;
+}
+
+let cache = Cache::new();
+let mut toql = MockDb::from(&amp;cache);
+let mut user = User {id:0, name: Some(&quot;Mary&quot;.to_string())};
+
+toql.insert_one(&amp;mut user, paths!(top)).await.unwrap(); 
+
+assert_eq!(toql.take_unsafe_sql(), &quot;INSERT INTO User (name) VALUES ('Mary')&quot;);
+assert_eq!(user.id, 100);
+#   }
+</code></pre></pre>
 <a class="header" href="#joins-2" id="joins-2"><h2>Joins</h2></a>
 <p><em>Inner</em> joins can also have the <code>key</code> attribute. This is useful for association tables.</p>
 <p>For a join used as a key the SQL builder takes the primary key of the joined struct to guess the foreign key columns.</p>
-<a class="header" href="#example-3" id="example-3"><h4>Example:</h4></a>
+<a class="header" href="#example-4" id="example-4"><h4>Example:</h4></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -1897,23 +1925,23 @@ struct UserLanguage {
   #[toql(key)] 
   user_id: u64,
 
-  #[toql(join, key)]  
+  #[toql(key, join)]  
   language: Language 
 }
 #}</code></pre></pre>
-<p>For the example above Toql assumes that the database table <code>UserLanguage</code>  has a composite key made up of the two columns <code>user_id</code> and <code>language_code</code>. You can change this assumption, see <a href="4-derive/4-derive/4-joins.html">here</a>.</p>
+<p>For the example above Toql assumes that the database table <code>UserLanguage</code>  has a composite key made up of the two columns <code>user_id</code> and <code>language_code</code>. You can change this assumption, see <a href="4-derive/6-joins.html">here</a>.</p>
 <a class="header" href="#generated-key-struct" id="generated-key-struct"><h2>Generated key struct</h2></a>
 <p>The Toql derive creates for every struct a corresponding key struct. The key struct contains only the fields marked as key form the derived stuct.</p>
-<p>Keys are useful to :</p>
+<p>Keys are useful to</p>
 <ul>
-<li>Delete a value with <code>delete_one</code>.</li>
-<li>Build a <a href="4-derive/3-api/2-load.html">query</a>.</li>
-<li>Update a <a href="4-derive/4-derive/4-joins.html">join</a>.</li>
+<li>delete a value with <code>delete_one</code>.</li>
+<li>build a <a href="4-derive/../3-api/2-load.html">query</a>.</li>
+<li>update a <a href="4-derive/6-joins.html">join</a>.</li>
 </ul>
-<p>Keys can be serialized and deserialized with serde, if the <code>serde</code> feature is eanbled.
+<p>Keys can be serialized and deserialized with serde, if the <code>serde</code> feature is enabled.
 This allows web clients to send either a full entity or just the key of it,
-if they want to update some dependency.</p>
-<a class="header" href="#example-4" id="example-4"><h4>Example</h4></a>
+if they want to update some foreign key.</p>
+<a class="header" href="#example-5" id="example-5"><h4>Example</h4></a>
 <pre><pre class="playpen"><code class="language-rust">#   #[tokio::main(flavor=&quot;current_thread&quot;)]
 #   async fn main() {
 #   use toql::prelude::{ToqlApi,Cache, query, ContextBuilder};
@@ -1935,13 +1963,13 @@ toql.delete_one(key).await.unwrap();
 # }
 </code></pre></pre>
 <a class="header" href="#unkeyable-fields" id="unkeyable-fields"><h2>Unkeyable fields</h2></a>
-<p>Only columns and inner joins can be used as keys. Merged fields (<code>Vec&lt;T&gt;</code>) and fields that map to an Sql expression (<code>#[toql(sql=&quot;..&quot;)</code>) cannot be used as keys.</p>
+<p>Only columns and inner joins can be used as keys. Merged fields (<code>Vec&lt;T&gt;</code>) and fields that map to an SQL expression (<code>#[toql(sql=&quot;..&quot;)</code>) cannot be used as keys.</p>
 <a class="header" href="#insert" id="insert"><h1>Insert</h1></a>
 <p>When you insert a struct, all fields, including foreign keys of joins, will be inserted.</p>
-<p>Check <a href="4-derive/../3-api/4-insert.html">the api</a> for details.</p>
+<p>Check <a href="4-derive/../3-api/4-insert.html">the API</a> for details.</p>
 <a class="header" href="#default-values" id="default-values"><h2>Default values</h2></a>
-<p>For <em>selectable</em> fields in a struct that are <code>None</code> Toql will insert the default value for the corresponding table column.
-If you have not defined a default value in your database you must ensure that the field in the struct cannot be <code>None</code>.
+<p>For Selectable fields in a struct that are <code>None</code> the default value will be inserted.
+If you have not defined a default value in your database you must ensure that the field in the struct can't be <code>None</code>.
 This can be done through prior validation.</p>
 <a class="header" href="#insert-behaviour" id="insert-behaviour"><h2>Insert behaviour</h2></a>
 <p>The insert behaviour depends on the type amd mapping of a field:</p>
@@ -1967,7 +1995,7 @@ use toql::prelude::Toql;
 #[derive(Toql)]
 struct User {
     #[toql(key)]
-    id: u64,                     // Keys are never inserted
+    id: u64,                    
     
     username: String,		// Value
     realname: Option&lt;String&gt;,	// Default or value
@@ -2043,16 +2071,16 @@ struct User {
     #[toql(join)]
     address2: Option&lt;Option&lt;Address&gt;&gt;,//  Update foreign_key or NULL, if Some 
 
-    #[toql(join())]
+    #[toql(join)]
     address3: Address, 		// Update foreign_key
 
-    #[toql(join(), preselect)]
+    #[toql(join, preselect)]
     address4: Option&lt;Address&gt;,	// Update foreign_key or NULL
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones1: Vec&lt;Phone&gt;,	// No effect for *
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones2: Option&lt;Vec&lt;Phone&gt;&gt; // No effect for *, 
 }
 #}</code></pre></pre>
@@ -2062,7 +2090,28 @@ However merges must be explicitly mentioned.</p>
 <code>*, phones1</code>.</p>
 <a class="header" href="#selections" id="selections"><h1>Selections</h1></a>
 <p>Selections are a list of fields and can be defined on a struct.
-A Toql query can then select the selection instead of all the individual fields. See <a href="../5-query-language/6-selections">here</a>.</p>
+A Toql query can then select the selection instead of all the individual fields.</p>
+<a class="header" href="#builtin-selections" id="builtin-selections"><h2>Builtin selections</h2></a>
+<p>For more information about selections, see also the <a href="4-derive/../5-query-language/5-selections.html">chapter</a> in the query language.</p>
+<a class="header" href="#the-mutable-selection" id="the-mutable-selection"><h4>The mutable selection</h4></a>
+<p>The builtin <code>$mut</code> selection selects all fields that are mutable.
+This can be used for debugging purposes.
+The fields of this selection cannot be user defined.</p>
+<a class="header" href="#the-all-selection" id="the-all-selection"><h4>The all selection</h4></a>
+<p>The <code>$all</code> selects all fields from a struct. This includes fields that are marked with <code>skip_wildcard</code>.
+Joins and merges are not selected.
+The fields of this selection cannot be user defined.</p>
+<a class="header" href="#the-standart-selection" id="the-standart-selection"><h4>The standart selection</h4></a>
+<p>The standart selection <code>$std</code> behaves like any other user defined selection.
+However Toql supports this standart selection with the special short alias <code>$</code> in Toql queries.</p>
+<p>If the derive doesn't map the <code>$std</code> selection a query asking for it will fail.
+This is the same behaviour as for any other user defined selection.</p>
+<a class="header" href="#the-count-selection" id="the-count-selection"><h4>The count selection</h4></a>
+<p>To build count queries Toql considers filters on fields that are part of the <code>$cnt</code>
+selection.</p>
+<p>Predicates that should also be considered when building a count selection must be marked
+with the <code>count_filter</code> flag. See the next chapter on <a href="4-derive/14-predicates.html">predicates</a>.</p>
+<a class="header" href="#example-6" id="example-6"><h2>Example</h2></a>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -2076,10 +2125,10 @@ struct User {
  #[toql(key)]
  id: u64,
 
- name: String,
+ name: Option&lt;String&gt;,
 
  #[toql(join)]
- address: Address
+ address: Option&lt;Address&gt;
 }
  
 #[derive(Toql)]
@@ -2088,14 +2137,10 @@ struct Address {
  #[toql(key)]
  id: u64,
 
- street: String
+ street: Option&lt;String&gt;
 }
 #}</code></pre></pre>
-<p>Notice that selection names with 3 letters or less are internally reserved and my have special meanings.
-They can't be defined except <code>std</code> and <code>cnt</code>.</p>
-<p>The selections above can now be used in a query. Instead of writing <code>name, address_street</code> it is possible to write <code>$std</code> or event just <code>$</code>.
-(Because the standart selection is so common, <code>$</code> aliases to <code>$std</code>).</p>
-<p>The <code>cnt</code> selection is defined in a similar way.TODO</p>
+<p>The selections above can now be used in a query. Instead of asking for <code>name, address_street</code> it is possible to ask for <code>$std</code> or just <code>$</code>.</p>
 <a class="header" href="#predicates" id="predicates"><h1>Predicates</h1></a>
 <p>All normal filtering is based on fields, <a href="4-derive/../5-query-language/4-filter.html">see here</a>.
 However sometimes you may have a completely different filter criteria that can't be mapped on fields.</p>
@@ -2108,8 +2153,9 @@ use toql::prelude::Toql;
 #[toql(predicate(name = &quot;search&quot;, 
             sql = &quot;MATCH (..firstname, ..lastname) AGAINST (?  IN BOOLEAN MODE)&quot;),
       predicate(name = &quot;street&quot;, 
-            sql = &quot;EXISTS( SELECT 1 FROM User u JOIN Address a ON (u.address_id = a.id) \
-                  WHERE a.street = ? AND u.id = ..id)&quot;))]
+            sql = &quot;EXISTS( SELECT 1 FROM User u \
+                JOIN Address a ON (u.address_id = a.id) \
+                WHERE a.street = ? AND u.id = ..id)&quot;))]
 struct User {
 
  #[toql(key)]
@@ -2122,22 +2168,35 @@ struct User {
 <p>With the two predicates above you can seach for users that have a certain name with <code>@search 'peter'</code>
 and retrieve all users from a certain street with <code>@street 'elmstreet'</code>.</p>
 <p>The question marks in the predicate are replaced by the arguments provided.
-If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="4-derive/7-joins.html">on aux param</a>.</p>
+If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="4-derive/6-joins.html">on aux param</a>.</p>
+<a class="header" href="#predicate-naming" id="predicate-naming"><h2>Predicate naming</h2></a>
+<p>Predicate names are made up with letters, digits and underscores. They must begin with a letter.</p>
+<p>While you can use any case in the derive definition, the derive will transform the name into <code>mixedCase</code> to follow
+the naming scheme of the struct fields. So a predicate name such as <code>My_Address_contains</code> corresponds
+in the Toql query to <code>@myAddressContains</code> and the builder method wqould be called with <code>.my_address_contains()</code>.</p>
+<p>Also names must be different than the fields names in a struct. Otherwise a duplicate definition error will occur.
+This is currently a limitation in the library.</p>
 <a class="header" href="#reference" id="reference"><h2>Reference</h2></a>
-<p>The full predicate syntax is
-<code>predicate(name=&quot;..&quot;, sql=&quot;..&quot;, handler=&quot;..&quot;, on_aux_param(name&quot;..&quot;, index = .), count_filter</code>
-where</p>
+<p>The full predicate syntax is</p>
+<pre><code class="language-rust ignore">    predicate(
+      name=&quot;..&quot;,
+      sql=&quot;..&quot;,
+      handler=&quot;..&quot;,
+      on_aux_param(name&quot;..&quot;, index = ..),
+      count_filter
+</code></pre>
+<p>where</p>
 <ul>
 <li><strong>name</strong> is the name of the predicate. It can be called in a Toql query with <code>@name ..</code>.
 If a predicate is defined on a joined struct, that predicate can be called with a path
-<code>@path_name ..</code>. See <a href="4-derive/5-query-language/5-predictes.html">predicates in the query</a> for more details.</li>
+<code>@path_name ..</code>. See <a href="4-derive/../5-query-language/6-predicates.html">predicates in the query</a> for more details.</li>
 <li><strong>sql</strong> is a raw SQL expression. Use <code>?</code> to insert a predicate param in the SQL,
 <code>..</code> for the table alias and <code>&lt;aux_param&gt;</code> for an aux param value.</li>
 <li><strong>handler</strong> allows a custom predicate handler (build SQL with a function).
 Provide a function name without parenthesis that return a struct that implement <code>toql::prelude::PredicateHandler</code></li>
-<li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building custom joins.
-and can only be used when the predicate takes exactly one argument. See <a href="4-derive/7-join.html">example</a>.</li>
-<li><strong>count_filter</strong> determines that a predicate used in Toql query is also be used for <a href="4-derive/3-api/2-load.html">count queries</a>.</li>
+<li><strong>on_aux_param</strong> sets an aux param to the value of a predicate argument. Index refers to the argument in the SQL expression with 0 being the first <code>?</code>. This aux param is only available when building <code>ON</code> conditions for joins.
+and can only be used when the predicate takes exactly one argument. See <a href="4-derive/6-joins.html">example</a>.</li>
+<li><strong>count_filter</strong> makes Toql to use that a predicate for <a href="4-derive/../3-api/2-load.html">count queries</a>.</li>
 </ul>
 <a class="header" href="#predicate-handlers" id="predicate-handlers"><h1>Predicate handlers</h1></a>
 <p>It's also possible to write an own predicate handler.
@@ -2240,9 +2299,9 @@ let context = ContextBuilder::new()
         .with_roles(r)
         .build();
 #}</code></pre></pre>
-<p>See <a href="4-derive/3-api/1-introduction.html">here</a> for how to get a backend.</p>
+<p>See <a href="4-derive/../3-api/1-introduction.html">here</a> for how to get a backend.</p>
 <p>Notice that roles can restrict access to columns but not to rows.
-For row access control, check out the <a href="4-derive/../6-appendix/4-row-access-control.html">chapter</a> in the appendix.</p>
+For row access control, check out the <a href="4-derive/../6-appendix/3-row-access-control.html">chapter</a> in the appendix.</p>
 <a class="header" href="#load" id="load"><h2>Load</h2></a>
 <p>It's possible to restrict loading, filtering and ordering of a struct or individual fields, joins and merges.</p>
 <p>Let's assume a <code>struct Book</code>:</p>
@@ -2372,14 +2431,13 @@ struct Book {
 <a class="header" href="#attributes-for-structs" id="attributes-for-structs"><h2>Attributes for structs</h2></a>
 <table><thead><tr><th>Attribute </th><th> Description                             </th><th> Example / Remark</th></tr></thead><tbody>
 <tr><td>tables  </td><td>   Table renaming scheme for struct and joins </td><td>  <code>CamelCase</code>, <code>snake_case</code>, <code>SHOUTY_SNAKE_CASE</code> or <code>mixedCase</code></td></tr>
-<tr><td>columns        </td><td> Column renaming scheme </td></tr>
-<tr><td>table </td><td> Table name for a struct or join </td><td> <code>table =&quot;User&quot;</code> on struct <code>NewUser</code> will access table <code>User</code></td></tr>
-<tr><td>skip_mut </td><td>No code for insert, delete and update </td><td> struct cannot be updated</td></tr>
+<tr><td>table </td><td> Table name for a struct or join </td><td> <code>table = &quot;User&quot;</code> on struct <code>NewUser</code> will access table <code>User</code></td></tr>
+<tr><td>columns        </td><td> Column renaming scheme </td><td> Same cases as above.</td></tr>
+<tr><td>skip_mut </td><td>No code for insert, delete and update </td><td> For structs that are read only.</td></tr>
 <tr><td>predicate </td><td>  Define a predicate </td><td> <code>predicate(name=&quot;test&quot;, sql=&quot;MATCH(..name, ..address) AGAINST (?)&quot;)</code></td></tr>
 <tr><td>selection </td><td>  Define a selection </td><td> <code>selection(name=&quot;test&quot;, fields=&quot;*, address_street&quot;)</code></td></tr>
-<tr><td>alias </td><td>Ignore calculated alias and use this alias instead</td><td> <code>alias=&quot;tb1&quot;</code></td></tr>
-<tr><td>auto_key </td><td> Key is generated in database </td><td> <code>auto_key</code> Updates struct keys after inserts.</td></tr>
-<tr><td>roles  </td><td>  role restriction for load, update, insert, delete </td><td> <code>roles(update=&quot;admin;teacher&quot;, insert=&quot;admin&quot;)</code></td></tr>
+<tr><td>auto_key </td><td> Key is generated in database </td><td> <code>auto_key</code> updates struct keys after inserts.</td></tr>
+<tr><td>roles  </td><td>  Role restriction for load, update, insert, delete </td><td> <code>roles(update=&quot;admin;teacher&quot;, insert=&quot;admin&quot;)</code></td></tr>
 </tbody></table>
 <a class="header" href="#attributes-for-fields" id="attributes-for-fields"><h2>Attributes for fields</h2></a>
 <table><thead><tr><th>Attribute </th><th> Description </th><th> Example / Remark</th></tr></thead><tbody>
@@ -2416,7 +2474,7 @@ is translated into
 <p>Fields with underscores are called <em>fields with a path</em>. They are mapped to a joined or a merged dependency. For a join relationship, the join will be added to the SQL statement if the field is selected. For a merge relationship a second SQL query is run and the results are merged. Such a query might look like this <code>book_id, book_title, book_createdBy_id, sellers_city</code></p>
 </li>
 </ul>
-<a class="header" href="#example-5" id="example-5"><h4>Example</h4></a>
+<a class="header" href="#example-7" id="example-7"><h4>Example</h4></a>
 <p><code>id, book_id</code></p>
 <p>is translated into (assume a struct <code>User</code> that joins to a struct <code>Book</code>)</p>
 <p><code>SELECT a.id, b.id FROM User a JOIN Book b ON (a.book_id = b.id)</code></p>
@@ -2438,7 +2496,7 @@ An error is raised, if a query selects a field by name that it's not allowed to.
 selects with a wildcard, the disallowed field will just be ignored.</p>
 <a class="header" href="#ordering-fields" id="ordering-fields"><h1>Ordering fields</h1></a>
 <p>Fields can be ordered in ascending <code>+</code> or descending <code>-</code> way.</p>
-<a class="header" href="#example-6" id="example-6"><h4>Example</h4></a>
+<a class="header" href="#example-8" id="example-8"><h4>Example</h4></a>
 <p><code>+id, -title</code></p>
 <p>is translated into</p>
 <p><code>--snip-- ORDER BY id ASC, title DESC</code></p>
@@ -2448,7 +2506,7 @@ selects with a wildcard, the disallowed field will just be ignored.</p>
 <li>Lower numbers have higher priority.</li>
 <li>If two fields have the same number the first field in the query has more importance.</li>
 </ul>
-<a class="header" href="#example-7" id="example-7"><h4>Example</h4></a>
+<a class="header" href="#example-9" id="example-9"><h4>Example</h4></a>
 <p><code>-2id, -1title, -2age</code></p>
 <p>is translated into</p>
 <p><code>--snip-- ORDER BY title DESC, id DESC, age DESC</code></p>
@@ -2461,7 +2519,7 @@ selects with a wildcard, the disallowed field will just be ignored.</p>
 <li>Boolean arguments are expressed with numbers 0 and 1.</li>
 </ul>
 <p>To use a field only for filtering, but not for selection, hide it with a dot: <code>.age gt 50, .book_reviewed eq 1</code></p>
-<a class="header" href="#example-8" id="example-8"><h4>Example</h4></a>
+<a class="header" href="#example-10" id="example-10"><h4>Example</h4></a>
 <p><code>id, book_published eq 1, .age gt 50</code></p>
 <p>is typically translated into (using canonical aliases)</p>
 <p><code>SELECT user.id, user_book.id, user_book.published FROM User user JOIN Book user_book ON (user.book_id = user_book.id) WHERE user_book.published = 1 AND user.age &gt; 50</code></p>
@@ -2506,7 +2564,7 @@ Keep in mind that logical AND has higher precendence than logical OR.</p>
 <tr><td>date time </td><td>finishedAt ge '2005-12-31 08:30:00'</td><td> SQL format</td></tr>
 </tbody></table>
 <a class="header" href="#selections-1" id="selections-1"><h1>Selections</h1></a>
-<p>A typical query selects a lot of fields. Instead of writing out a long list of fields, predefined field lists can be <a href="5-query-language/../3-api/9-selections.html">mapped</a>.</p>
+<p>A typical query selects a lot of fields. Instead of writing out a long list of fields, predefined field lists can be <a href="5-query-language/../4-derive/13-selections.html">mapped</a>.</p>
 <p>The list can then be selected with a <code>$</code> followed by the selection name.</p>
 <p><code>$mySelection, $otherSelection</code></p>
 <p>There is a set of predefined selections:</p>
@@ -2526,7 +2584,7 @@ User defined selection names must contain at least 4 characters.</p>
 <a class="header" href="#predicates-1" id="predicates-1"><h1>Predicates</h1></a>
 <p>Normal query filters are applied to fields.
 Predicates overcome this limitation and can filter on any raw SQL predicate.</p>
-<p>The behaviour of predicates must be <a href="5-query-language/../4-derive/10-predicates.html">mapped</a>,
+<p>The behaviour of predicates must be <a href="5-query-language/../4-derive/14-predicates.html">mapped</a>,
 then they can be called with a <code>@</code>, the predicate name and zero or more arguments.</p>
 <pre><code class="language-toql">@search 'peter', @updated, @tags 'island' 'fun'
 </code></pre>

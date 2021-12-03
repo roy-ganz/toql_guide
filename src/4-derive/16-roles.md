@@ -36,10 +36,10 @@ let context = ContextBuilder::new()
 		.with_roles(r)
 		.build();
 ```
-See [here](3-api/1-introduction.md) for how to get a backend.
+See [here](../3-api/1-introduction.md) for how to get a backend.
 
 Notice that roles can restrict access to columns but not to rows. 
-For row access control, check out the [chapter](../6-appendix/4-row-access-control.md) in the appendix.
+For row access control, check out the [chapter](../6-appendix/3-row-access-control.md) in the appendix.
 
 ## Load
 It's possible to restrict loading, filtering and ordering of a struct or individual fields, joins and merges.

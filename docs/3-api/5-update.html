@@ -175,7 +175,7 @@ toql.update_many(&amp;mut [user], fields!(top)).await.unwrap();
 <a class="header" href="#the-fields-macro" id="the-fields-macro"><h3>The fields! macro</h3></a>
 <p>The <code>fields!</code> macro compiles a list of fields. Any invalid path or field name shows up at compile time.</p>
 <p>The update function will consider all fields from the field list to update. Optional fields will only
-be updated if they contain some value. See <a href="4-derive/12-update.html">the mapping</a> for details.</p>
+be updated if they contain some value. See <a href="../4-derive/12-update.html">the mapping</a> for details.</p>
 <a class="header" href="#joins" id="joins"><h4>Joins</h4></a>
 <p>You can update only the foreign key of a join or field from the join. Consider this field list:</p>
 <pre><code class="language-rust ignore">let f = fields!(User, &quot;*, address, address_*, address_id&quot;);
