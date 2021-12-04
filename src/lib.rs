@@ -1,9 +1,4 @@
-/* use doc_comment::doctest;
-
-#[cfg(doctest)]
-doctest!("../src/1-introduction.md"); */
-
-
+//! Doc tests
 #[cfg(doctest)]
 mod test_doc {
   macro_rules! external_doc_test {
