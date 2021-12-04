@@ -49,9 +49,24 @@ For the above it would be *phone1_id*, *phone2_id*, *phone3_id* and *phone4_id*.
 
 
 If your naming scheme differs from that default behaviour, use the `columns` attribute:
-```rust, ignore
-#[toql(join(columns(self="mobile1_id", other="id")))]  
-phone1 : Phone 
+```rust
+#   use toql::prelude::Toql;
+#   #[derive(Toql)]
+#   struct Phone {
+#   	#[toql(key)]
+#   	country: u8,
+#   	#[toql(key)]
+#   	number: u64,
+#   }
+#   #[derive(Toql)]
+#   struct User {
+#   
+#   	#[toql(key)]
+#   	 id: u32,	
+#   
+	#[toql(join(columns(self="mobile1_id", other="id")))]  
+	phone1 : Phone 
+#   }
 ```
 
 For a composite key use `columns` multiple times.
@@ -205,21 +220,21 @@ Joins with custom `ON` expressions can't be inserted or updated, they are read o
 
 
 
-## The Join struct
+## The `Join` type
 Joining directly another struct is not ergonomic when you want to update the struct. 
 Thats why the `Join` enum exists. It can either take a struct value or just its key.
 
 Consider this
 
-```rust, ignore
+```rust
 use toql::prelude::Toql;
-# 	#[derive(Toql)]
-# 	struct Phone {
-#		#[toql(key)]
-#		country: u8,
-#		#[toql(key)]
-#		number: u64,
-#	}
+#   #[derive(Toql)]
+#   struct Phone {
+#   	#[toql(key)]
+#   	country: u8,
+#   	#[toql(key)]
+#   	number: u64,
+#   }
 
 #[derive(Toql)]
 struct User {
@@ -234,17 +249,24 @@ struct User {
 
 Here when we want to set a new `Phone` for the user, we need to provide a full `Phone` struct
 even tough we only want to set a new value for the foreign key `phone_id` in `User`.
-This feels unnesseary and `toql::prelude::Join` comes to our rescue:
+This feels clumsy and `toql::prelude::Join` comes to our rescue:
 
-```rust,ignore
-use toql::prelude::{Toql, Join};
-# 	#[derive(Toql)]
-# 	struct Phone {
-#		#[toql(key)]
-#		country: u8,
-#		#[toql(key)]
-#		number: u64,
-#	}
+```rust
+#   #[tokio::main(flavor="current_thread")]
+async fn main() -> Result<(), toql::prelude::ToqlError> {
+use toql::prelude::{Toql, Join, ToqlApi,Cache, query, 
+					fields, rval,join, rval_join};
+use toql::mock_db::MockDb;
+use toql::row;
+
+#[derive(Toql)]
+struct Phone {
+
+	#[toql(key)]
+	number: String,
+
+	prepaid: Option<bool>,
+}
 
 #[derive(Toql)]
 struct User {
@@ -253,21 +275,75 @@ struct User {
 	 id: u32,	
 
 	#[toql(join)]
-	 phone: Join<Phone>,
+	 phone: Option<Join<Phone>>,
 
-	 #[toql(join)]
-	 phone2: Option<Option<Join<Phone>>>
+}
+
+let cache = Cache::new();
+let mut toql = MockDb::from(&cache);
+let select = "SELECT user.id, user_phone.number, user_phone.prepaid \
+				FROM User user \
+				JOIN (Phone user_phone) \
+				ON (user.phone_number = user_phone.number) \
+				WHERE user.id = 1";
+
+toql.mock_rows(select, vec![row!(1u64, "1 123 45 67", true)]);
+
+let q = query!(User, "phone_prepaid, id eq ?", 1);
+
+let mut user = toql.load_one(&q).await.unwrap(); 
+assert_eq!(toql.take_unsafe_sql(), select);
+
+// 4 ways to get the phone 
+// Note that the macros `rval!`, `join!`, `rval_join!` 
+// raise an error and return early, 
+// if they can't get a value
+
+// 1. `rval_join!` macro -> recommended
+let phone1 = rval_join!(user.phone);
+
+// 2. `join!` macro -> just for educational purpose
+let phone2 = join!(rval!(user.phone));
+
+// 3. `Join::entity()` method + `rval!` macro -> educational
+let temp3 = &user.phone;
+let temp31 = temp3.as_ref().unwrap().entity();
+let phone3 = rval!(temp31);
+
+// 4. No macros 
+let temp4 = &user.phone;
+let phone4 = temp4.as_ref().unwrap().entity().unwrap(); 
+
+assert_eq!(phone1.number, "1 123 45 67");
+assert_eq!(phone2.number, "1 123 45 67");
+assert_eq!(phone3.number, "1 123 45 67");
+assert_eq!(phone4.number, "1 123 45 67");
+
+// Update phone number (foreign key only)
+user.phone = Some(Join::with_key(PhoneKey::from("0300 123 45 67".to_string())));
+
+toql.update_one(&mut user, fields!(User, "phone, phone_prepaid")).await.unwrap();
+assert_eq!(toql.take_unsafe_sql(), 
+	"UPDATE User SET phone_number = '0300 123 45 67' WHERE id = 1"); 
+
+// Update phone (foreign key + entity)
+let phone = Phone{number: "0300 123 45 67".to_string(), prepaid: Some(true)};
+user.phone= Some(Join::with_entity(phone));
+
+toql.update_one(&mut user, fields!(User, "phone, phone_prepaid")).await.unwrap();
+assert_eq!(toql.take_unsafe_sqls(), [
+	"UPDATE Phone SET prepaid = TRUE WHERE number = '0300 123 45 67'", 
+	"UPDATE User SET phone_number = '0300 123 45 67' WHERE id = 1"]);
+
+Ok(())
 }
 ```
 
 This has the following advantages:
  - Loads as normal, `Join` will always hold a full value.
  - Updating the `phone_id` column in User requires only a `PhoneKey`.
-   This key can be always be taken out from `Join`.
- - Web clients can send in keys or full entities. `Join` will deserialize into whatever is possible.
-  
-For working with joins in your code checkout the `toql::prelude::join!` or `toql::prelude::rval_join!` macros.
-
+   This key can be always be taken out from a `Join`.
+ - Web clients can send keys or full entities. `Join` will deserialize into whatever is possible.
 
 ## Sidenote for SQL generation
 

@@ -7,7 +7,6 @@ edition = "2018"
 [dev-dependencies]
 toql = {git="https://github.com/roy-ganz/toql.git", features= ["serde"]}
 toql_mysql_async = {git="https://github.com/roy-ganz/toql_mysql_async.git"}
-mysql_enum = "0.1"
 strum = "0.22"
 strum_macros = "0.22"
 serde = {version = "1",  features = ["derive"] }
@@ -16,5 +15,3 @@ tokio = {version = "1", features=["macros"]}
 [patch.'https://github.com/roy-ganz/toql.git']
 toql= {path="../toql"}
 
-[patch.crates-io]
-mysql_enum = { path = "../mysql_enum"}

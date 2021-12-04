@@ -33,7 +33,7 @@
 	- [Selections](5-query-language/5-selections.md)
 	- [Predicates](5-query-language/6-predicates.md)
 - [Appendix](6-appendix/1-introduction.md)
-	- [MySQL enums](6-appendix/2-mysql-enums.md)
+	- [Enums](6-appendix/2-enums.md)
 	- [Row access control](6-appendix/3-row-access-control.md)
 	- [Serde](6-appendix/4-serde.md)
 	- [Debugging Toql](6-appendix/5-debugging-toql.md)

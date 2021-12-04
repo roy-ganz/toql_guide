@@ -23,11 +23,12 @@ struct User {
 ```
 
 ## Auto key
-If your primary key is generated in your database you can tell this with the `[#toql(auto_key)]`. 
-Inserts will ignore the primary keys and instead load the new key from the database.
+If your primary key is generated in your database you can tell this with `[#toql(auto_key)]`. 
+
+Inserts will then ignore the primary key in the struct and instead load the newly generated key from the database.
 The new key is then stored in the struct field. 
 
-Notice this cannot be used with joined keys.
+Notice this can't be used with joined keys.
 
 #### Example:
 ```rust
@@ -84,7 +85,7 @@ struct UserLanguage {
   language: Language 
 }
 ```
-For the example above Toql assumes that the database table `UserLanguage`  has a composite key made up of the two columns `user_id` and `language_code`. You can change this assumption, see [here](6-joins.md).
+In the example above Toql assumes that the database table `UserLanguage`  has a composite key made up of the two columns `user_id` and `language_code`. You can change this assumption, see [here](6-joins.md).
 
 ## Generated key struct
 The Toql derive creates for every struct a corresponding key struct. The key struct contains only the fields marked as key form the derived stuct.
