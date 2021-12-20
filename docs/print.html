@@ -378,7 +378,7 @@ For the <em>total page count</em> only filters are used on fields that are liste
 <a class="header" href="#the-query-macro" id="the-query-macro"><h3>The <code>query!</code> macro</h3></a>
 <p>The <code>query!</code> macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up
 as compiler errors!</p>
-<p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here (This assumes a Toql derived User struct):</p>
+<p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -456,7 +456,7 @@ let qk = ks.iter().collect::&lt;Query&lt;_&gt;&gt;();
 let q5 = query!(User, &quot;*, {}&quot;, qk);
 #}</code></pre></pre>
 <p>The query <code>q4</code> only works for a simple key, not a composite key, whereas <code>qk</code> works for any type of key.</p>
-<p>If you deal with entities you can get their keys from them (notice the <code>Keyed</code> trait). See here</p>
+<p>If you deal with entities you can get their keys from them (notice the <code>Keyed</code> trait):</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -601,7 +601,7 @@ impl&lt;T&gt; Into&lt;Query&lt;T&gt;&gt; for Auth {
 }
 #}</code></pre></pre>
 <p>Wrong field names in <code>Field::from</code> do not show up at compile time, but at runtime.</p>
-<p>You can use both examples like so</p>
+<p>You can use both examples like so:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -926,6 +926,7 @@ and tell the database what to do with your joined rows: Delete them too or just 
 <li><a href="https://www.postgresql.org/docs/8.2/ddl-constraints.html#DDL-CONSTRAINTS-FK">Postgres</a></li>
 </ul>
 <a class="header" href="#writing-functions" id="writing-functions"><h2>Writing functions</h2></a>
+<p><strong>TODO This chapter needs to be written</strong></p>
 <p>In bigger projects you need to structure your code with functions.</p>
 <p>There as two common ways, each with different tradeoffs</p>
 <ul>
@@ -935,13 +936,10 @@ and tell the database what to do with your joined rows: Delete them too or just 
 <a class="header" href="#passing-the-database" id="passing-the-database"><h3>Passing the database</h3></a>
 <p>If you decide to pass the database you give up on database independence, but less trait bounds are needed:</p>
 <p>For MySQL this looks like this:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-use toql::prelude::ToqlApi;
+<pre><code class="language-rust ignore">use toql::prelude::ToqlApi;
 use toql_mysql_async::prelude::{MySqlAsync, Queryable};
 fn do_stuff&lt;C&gt;(toql: &amp;mut MySqlAsync&lt;'_,C&gt;) 
-where C:Queryable -&gt; Resulty
+where C:Queryable -&gt; Result
 {
     let q = query!(...)
     let users = toql.load_many(&amp;q).await?;
@@ -949,7 +947,7 @@ where C:Queryable -&gt; Resulty
     toql.update_many(users, fields!(top)).await?;
     toql.delete_many(q).await?;
 }
-#}</code></pre></pre>
+</code></pre>
 <p>The <code>Queryable</code> trait makes the <code>MySqlAsync</code> work with a connection or a transaction.</p>
 <a class="header" href="#database-independed-functions" id="database-independed-functions"><h2>Database independed functions</h2></a>
 <p>It's also possible to pass a struct that implements <code>ToqlApi</code>.
@@ -1407,8 +1405,8 @@ it mightly come handy to give the field handler some local context.</p>
 <p>A struct can refer to another struct. This is done with a SQL join.</p>
 <p>Joins are added to the SQL statement when</p>
 <ul>
-<li>requested in the query, like so: <code>phone1_id</code></li>
-<li>or joins are preselected.</li>
+<li>they are requested in the query, like so: <code>phone1_id</code>.</li>
+<li>they are preselected.</li>
 </ul>
 <a class="header" href="#join-mapping-example" id="join-mapping-example"><h4>Join mapping example</h4></a>
 <pre><pre class="playpen"><code class="language-rust">
@@ -1432,16 +1430,16 @@ struct User {
 
      name: Option&lt;String&gt;,
 
-     #[toql(join())]  
+     #[toql(join)]  
      phone1 : Phone, 		// Always selected inner join
 
-     #[toql(join())]  
+     #[toql(join)]  
      phone2 : Option&lt;Phone&gt;, // Selectable inner join
 
-     #[toql(join())]  
+     #[toql(join)]  
      phone3 : Option&lt;Option&lt;Phone&gt;&gt;, // Selectable left join
 
-     #[toql(join(), preselect)]  
+     #[toql(join, preselect)]  
      phone4 : Option&lt;Phone&gt;, // Always selected left join
 }
 #}</code></pre></pre>
@@ -2052,11 +2050,11 @@ toql.delete_one(key).await.unwrap();
 <p>When you insert a struct, all fields, including foreign keys of joins, will be inserted.</p>
 <p>Check <a href="4-derive/../3-api/4-insert.html">the API</a> for details.</p>
 <a class="header" href="#default-values" id="default-values"><h2>Default values</h2></a>
-<p>For Selectable fields in a struct that are <code>None</code> the default value will be inserted.
+<p>For selectable fields in a struct that are <code>None</code> the default value will be inserted.
 If you have not defined a default value in your database you must ensure that the field in the struct can't be <code>None</code>.
 This can be done through prior validation.</p>
 <a class="header" href="#insert-behaviour" id="insert-behaviour"><h2>Insert behaviour</h2></a>
-<p>The insert behaviour depends on the type amd mapping of a field:</p>
+<p>The insert behaviour depends on the type and mapping of a field:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -2088,22 +2086,22 @@ struct User {
     #[toql(preselect)]
     info: Option&lt;String&gt;, 	// Nullable column: Value or NULL
 
-    #[toql(join())]
+    #[toql(join)]
     address1: Option&lt;Address&gt;, 	// Selectable inner Join: Foreign key is inserted or default
 
-    #[toql(join())]
+    #[toql(join)]
     address2: Option&lt;Option&lt;Address&gt;&gt;,// Selectable left join: Default, value or NULL
 
-    #[toql(join())]
+    #[toql(join)]
     address3: Address, 		// Inner Join: Foreign key or default
 
-    #[toql(join(), preselect)]
+    #[toql(join, preselect)]
     address4: Option&lt;Address&gt;,	// Selectable inner join: Foreign key or default
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones1: Vec&lt;Phone&gt;,		// No change on table 'User'
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones2: Option&lt;Vec&lt;Phone&gt;&gt; // No change on table 'User'
 }
 #}</code></pre></pre>
@@ -2252,7 +2250,7 @@ struct User {
 <p>With the two predicates above you can seach for users that have a certain name with <code>@search 'peter'</code>
 and retrieve all users from a certain street with <code>@street 'elmstreet'</code>.</p>
 <p>The question marks in the predicate are replaced by the arguments provided.
-If there is only one argument, it can also be used to build an <code>ON</code> predicate in a join. See <a href="4-derive/6-joins.html">on aux param</a>.</p>
+Arguments can also be used to build an <code>ON</code> predicate in a join. See <a href="4-derive/6-joins.html">on aux param</a>.</p>
 <a class="header" href="#predicate-naming" id="predicate-naming"><h2>Predicate naming</h2></a>
 <p>Predicate names are made up with letters, digits and underscores. They must begin with a letter.</p>
 <p>While you can use any case in the derive definition, the derive will transform the name into <code>mixedCase</code> to follow

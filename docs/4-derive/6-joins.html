@@ -144,8 +144,8 @@
 <p>A struct can refer to another struct. This is done with a SQL join.</p>
 <p>Joins are added to the SQL statement when</p>
 <ul>
-<li>requested in the query, like so: <code>phone1_id</code></li>
-<li>or joins are preselected.</li>
+<li>they are requested in the query, like so: <code>phone1_id</code>.</li>
+<li>they are preselected.</li>
 </ul>
 <a class="header" href="#join-mapping-example" id="join-mapping-example"><h4>Join mapping example</h4></a>
 <pre><pre class="playpen"><code class="language-rust">
@@ -169,16 +169,16 @@ struct User {
 
      name: Option&lt;String&gt;,
 
-     #[toql(join())]  
+     #[toql(join)]  
      phone1 : Phone, 		// Always selected inner join
 
-     #[toql(join())]  
+     #[toql(join)]  
      phone2 : Option&lt;Phone&gt;, // Selectable inner join
 
-     #[toql(join())]  
+     #[toql(join)]  
      phone3 : Option&lt;Option&lt;Phone&gt;&gt;, // Selectable left join
 
-     #[toql(join(), preselect)]  
+     #[toql(join, preselect)]  
      phone4 : Option&lt;Phone&gt;, // Always selected left join
 }
 #}</code></pre></pre>

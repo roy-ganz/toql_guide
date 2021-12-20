@@ -141,6 +141,7 @@
                 <div id="content" class="content">
                     <main>
                         <a class="header" href="#writing-functions" id="writing-functions"><h2>Writing functions</h2></a>
+<p><strong>TODO This chapter needs to be written</strong></p>
 <p>In bigger projects you need to structure your code with functions.</p>
 <p>There as two common ways, each with different tradeoffs</p>
 <ul>
@@ -150,13 +151,10 @@
 <a class="header" href="#passing-the-database" id="passing-the-database"><h3>Passing the database</h3></a>
 <p>If you decide to pass the database you give up on database independence, but less trait bounds are needed:</p>
 <p>For MySQL this looks like this:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-use toql::prelude::ToqlApi;
+<pre><code class="language-rust ignore">use toql::prelude::ToqlApi;
 use toql_mysql_async::prelude::{MySqlAsync, Queryable};
 fn do_stuff&lt;C&gt;(toql: &amp;mut MySqlAsync&lt;'_,C&gt;) 
-where C:Queryable -&gt; Resulty
+where C:Queryable -&gt; Result
 {
     let q = query!(...)
     let users = toql.load_many(&amp;q).await?;
@@ -164,7 +162,7 @@ where C:Queryable -&gt; Resulty
     toql.update_many(users, fields!(top)).await?;
     toql.delete_many(q).await?;
 }
-#}</code></pre></pre>
+</code></pre>
 <p>The <code>Queryable</code> trait makes the <code>MySqlAsync</code> work with a connection or a transaction.</p>
 <a class="header" href="#database-independed-functions" id="database-independed-functions"><h2>Database independed functions</h2></a>
 <p>It's also possible to pass a struct that implements <code>ToqlApi</code>.

@@ -152,7 +152,7 @@
 <a class="header" href="#the-query-macro" id="the-query-macro"><h3>The <code>query!</code> macro</h3></a>
 <p>The <code>query!</code> macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up
 as compiler errors!</p>
-<p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here (This assumes a Toql derived User struct):</p>
+<p>Queries are typesafe, so <code>query!</code> takes a type and a query expression. See here:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -230,7 +230,7 @@ let qk = ks.iter().collect::&lt;Query&lt;_&gt;&gt;();
 let q5 = query!(User, &quot;*, {}&quot;, qk);
 #}</code></pre></pre>
 <p>The query <code>q4</code> only works for a simple key, not a composite key, whereas <code>qk</code> works for any type of key.</p>
-<p>If you deal with entities you can get their keys from them (notice the <code>Keyed</code> trait). See here</p>
+<p>If you deal with entities you can get their keys from them (notice the <code>Keyed</code> trait):</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -375,7 +375,7 @@ impl&lt;T&gt; Into&lt;Query&lt;T&gt;&gt; for Auth {
 }
 #}</code></pre></pre>
 <p>Wrong field names in <code>Field::from</code> do not show up at compile time, but at runtime.</p>
-<p>You can use both examples like so</p>
+<p>You can use both examples like so:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {

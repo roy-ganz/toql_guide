@@ -144,11 +144,11 @@
 <p>When you insert a struct, all fields, including foreign keys of joins, will be inserted.</p>
 <p>Check <a href="../3-api/4-insert.html">the API</a> for details.</p>
 <a class="header" href="#default-values" id="default-values"><h2>Default values</h2></a>
-<p>For Selectable fields in a struct that are <code>None</code> the default value will be inserted.
+<p>For selectable fields in a struct that are <code>None</code> the default value will be inserted.
 If you have not defined a default value in your database you must ensure that the field in the struct can't be <code>None</code>.
 This can be done through prior validation.</p>
 <a class="header" href="#insert-behaviour" id="insert-behaviour"><h2>Insert behaviour</h2></a>
-<p>The insert behaviour depends on the type amd mapping of a field:</p>
+<p>The insert behaviour depends on the type and mapping of a field:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
@@ -180,22 +180,22 @@ struct User {
     #[toql(preselect)]
     info: Option&lt;String&gt;, 	// Nullable column: Value or NULL
 
-    #[toql(join())]
+    #[toql(join)]
     address1: Option&lt;Address&gt;, 	// Selectable inner Join: Foreign key is inserted or default
 
-    #[toql(join())]
+    #[toql(join)]
     address2: Option&lt;Option&lt;Address&gt;&gt;,// Selectable left join: Default, value or NULL
 
-    #[toql(join())]
+    #[toql(join)]
     address3: Address, 		// Inner Join: Foreign key or default
 
-    #[toql(join(), preselect)]
+    #[toql(join, preselect)]
     address4: Option&lt;Address&gt;,	// Selectable inner join: Foreign key or default
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones1: Vec&lt;Phone&gt;,		// No change on table 'User'
 
-    #[toql(merge())]
+    #[toql(merge)]
     phones2: Option&lt;Vec&lt;Phone&gt;&gt; // No change on table 'User'
 }
 #}</code></pre></pre>
