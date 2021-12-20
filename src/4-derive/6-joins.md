@@ -3,8 +3,8 @@
 A struct can refer to another struct. This is done with a SQL join. 
 
 Joins are added to the SQL statement when
-- requested in the query, like so: `phone1_id`
-- or joins are preselected.
+- they are requested in the query, like so: `phone1_id`.
+- they are preselected.
 
 
 #### Join mapping example
@@ -28,16 +28,16 @@ struct User {
 
 	 name: Option<String>,
 
-	 #[toql(join())]  
+	 #[toql(join)]  
 	 phone1 : Phone, 		// Always selected inner join
 
-	 #[toql(join())]  
+	 #[toql(join)]  
 	 phone2 : Option<Phone>, // Selectable inner join
 
-	 #[toql(join())]  
+	 #[toql(join)]  
 	 phone3 : Option<Option<Phone>>, // Selectable left join
 
-	 #[toql(join(), preselect)]  
+	 #[toql(join, preselect)]  
 	 phone4 : Option<Phone>, // Always selected left join
 }
 ```

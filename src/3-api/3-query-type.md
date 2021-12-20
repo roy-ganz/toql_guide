@@ -15,7 +15,7 @@ This chapter does not explain the Toql query language itself, see [here](../5-qu
 The `query!` macro will compile the provided string into Rust code. Any syntax mistakes, wrong path or field names show up 
 as compiler errors! 
 
-Queries are typesafe, so `query!` takes a type and a query expression. See here (This assumes a Toql derived User struct):
+Queries are typesafe, so `query!` takes a type and a query expression. See here:
 
 ```rust
 use toql::prelude::{query, Toql};
@@ -98,7 +98,7 @@ let q5 = query!(User, "*, {}", qk);
 
 The query `q4` only works for a simple key, not a composite key, whereas `qk` works for any type of key.
 
-If you deal with entities you can get their keys from them (notice the `Keyed` trait). See here
+If you deal with entities you can get their keys from them (notice the `Keyed` trait):
 
 ```rust
 use toql::prelude::{query, Keyed, Query};
@@ -248,7 +248,7 @@ impl<T> Into<Query<T>> for Auth {
 ```
 Wrong field names in `Field::from` do not show up at compile time, but at runtime.
 
-You can use both examples like so
+You can use both examples like so:
 
 ```rust
 use toql::prelude::query;

@@ -4,13 +4,13 @@ When you insert a struct, all fields, including foreign keys of joins, will be i
 Check [the API](../3-api/4-insert.md) for details.
 
 ## Default values
-For Selectable fields in a struct that are `None` the default value will be inserted.
+For selectable fields in a struct that are `None` the default value will be inserted.
 If you have not defined a default value in your database you must ensure that the field in the struct can't be `None`. 
 This can be done through prior validation.
 
 
 ## Insert behaviour 
-The insert behaviour depends on the type amd mapping of a field:
+The insert behaviour depends on the type and mapping of a field:
 
 ```rust
 use toql::prelude::Toql;
@@ -41,22 +41,22 @@ struct User {
 	#[toql(preselect)]
 	info: Option<String>, 	// Nullable column: Value or NULL
 
-	#[toql(join())]
+	#[toql(join)]
 	address1: Option<Address>, 	// Selectable inner Join: Foreign key is inserted or default
 
-	#[toql(join())]
+	#[toql(join)]
 	address2: Option<Option<Address>>,// Selectable left join: Default, value or NULL
 
-	#[toql(join())]
+	#[toql(join)]
 	address3: Address, 		// Inner Join: Foreign key or default
 
-	#[toql(join(), preselect)]
+	#[toql(join, preselect)]
 	address4: Option<Address>,	// Selectable inner join: Foreign key or default
 
-	#[toql(merge())]
+	#[toql(merge)]
 	phones1: Vec<Phone>,		// No change on table 'User'
 
-	#[toql(merge())]
+	#[toql(merge)]
 	phones2: Option<Vec<Phone>> // No change on table 'User'
 }
 ```

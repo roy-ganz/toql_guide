@@ -28,7 +28,7 @@ With the two predicates above you can seach for users that have a certain name w
 and retrieve all users from a certain street with `@street 'elmstreet'`.
 
 The question marks in the predicate are replaced by the arguments provided. 
-If there is only one argument, it can also be used to build an `ON` predicate in a join. See [on aux param](6-joins.md).
+Arguments can also be used to build an `ON` predicate in a join. See [on aux param](6-joins.md).
 
 ## Predicate naming
 Predicate names are made up with letters, digits and underscores. They must begin with a letter.
